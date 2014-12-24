@@ -1,0 +1,21 @@
+  _____ _        _____            _____          
+ |_   _(_) ___  |_   _|_ _  ___  |_   _|__   ___ 
+   | | | |/ __|   | |/ _` |/ __|   | |/ _ \ / _ \
+   | | | | (__    | | (_| | (__    | | (_) |  __/
+   |_| |_|\___|   |_|\__,_|\___|   |_|\___/ \___|
+                                                 
+
+Allan Legemaate, Allan Daniel Software
+-----------------------
+Adsgames 2012
+Controls:
+-----------------------
+
+Use the mouse to select a square to draw in.
+Press the left mouse button to draw an x or an o.
+
+Simple as that! Have fun!
+
+
+Visit us at www.adsgames.net
+Contact us at contact@adsgames.net

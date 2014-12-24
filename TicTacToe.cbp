@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="TicTacToe" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="default">
+				<Option output="build/TicTacToe" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="build" />
+				<Option object_output="output" />
+				<Option type="0" />
+				<Option compiler="gcc" />
+				<Linker>
+					<Add option="-lalpng" />
+					<Add option="-lalleg" />
+					<Add option="-lfmod" />
+				</Linker>
+			</Target>
+		</Build>
+		<Linker>
+			<Add library="alleg" />
+		</Linker>
+		<Unit filename="button.cpp" />
+		<Unit filename="button.h" />
+		<Unit filename="main.cpp" />
+		<Unit filename="resources.rc">
+			<Option compilerVar="WINDRES" />
+		</Unit>
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

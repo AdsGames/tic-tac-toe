@@ -1,0 +1,82 @@
+  _____ _        _____            _____          
+ |_   _(_) ___  |_   _|_ _  ___  |_   _|__   ___ 
+   | | | |/ __|   | |/ _` |/ __|   | |/ _ \ / _ \
+   | | | | (__    | | (_| | (__    | | (_) |  __/
+   |_| |_|\___|   |_|\__,_|\___|   |_|\___/ \___|
+                                                 
+
+Allan Legemaate, Allan Daniel Software
+-----------------------
+Adsgames 2012
+Changelog:
+-----------------------
+
+Version 4.1
+--------------
+*GUI overhaul
+*Images changed to pngs to decrease file size
+*Changed icon
+*Transition Effects
+*When gone to menu and then back to game, game is restarted
+*Increased line size
+*Small bug fixes
+
+Version 4.0
+--------------
+*Main menu added
+*One player and two player now integrated into one
+*Option to turn off sound
+*3 difficulties added (easier and harder ai added)
+*New cursors added
+
+Version 3.2
+--------------
+--SOURCE CODE RECOVERED!!!!!--
+*Made folders for sfx and images
+*Changed selector images
+*Now mouse compatible!
+*Added controls.txt into main folder
+*Changed icon
+
+Version 3.1
+--------------
+*O responds to bottom row Xs
+
+Version 3.0
+--------------
+*A.I. improved for O
+
+Version 2.3.1
+--------------
+*Pressing s changes selector
+
+Version 2.3
+--------------
+*Added placing sound effects
+
+Version 2.2
+--------------
+*Fixed bug where game freezes on cats game
+*Added wait on winner/lose/catsgame announcements
+*Sounds Added
+
+Version 2.1
+--------------
+*Tic Tac Toe changed to Tic Tac Toe 2 Player
+*Tic Tac Toe 1 player added
+
+Version 1.1
+--------------
+*Changed moving from wsad to arrow keys
+*Space is now choose instead of enter
+*Fixed choosing bug where x&o would switch to fast when enter pressed
+*Xs & Os dont overwrite one another
+*Cats game detection now added
+*New icon
+
+Version 1.0
+--------------
+*Game released
+
+Visit us at www.adsgames.net
+Contact us at contact@adsgames.net
