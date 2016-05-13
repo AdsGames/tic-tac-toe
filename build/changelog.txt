@@ -11,6 +11,10 @@ Adsgames 2012
 Changelog:
 -----------------------
 
+Version 4.2
+--------------
+*Changed some GUI
+
 Version 4.1
 --------------
 *GUI overhaul
