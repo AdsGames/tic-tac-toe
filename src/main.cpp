@@ -3,19 +3,23 @@
 #include <math.h>
 
 #include "button.h"
+#include "mouseListener.h"
+
+// Mouse listener
+mouseListener m_listener;
 
 //Creates images
 BITMAP* buffer;
 BITMAP* grid;
-BITMAP* X;
-BITMAP* O;
+BITMAP* img_x;
+BITMAP* img_o;
 BITMAP* blank;
-BITMAP* selected;
 BITMAP* xwin;
 BITMAP* owin;
 BITMAP* catsgame;
-BITMAP* cursor;
+BITMAP* cursor[3];
 BITMAP* main_menu;
+BITMAP* selected[4];
 
 //Create sounds
 SAMPLE* win;
@@ -43,6 +47,9 @@ int soundfx;
 int gameScreen;
 bool gameRunning;
 
+// Draw function
+void draw( bool to_screen);
+
 //Array of the game board
 int gridarray[3][3]={
   {0,0,0},
@@ -50,14 +57,16 @@ int gridarray[3][3]={
   {0,0,0}
 };
 
-int selectedarray[3][3]={
-  {1,0,0},
-  {0,0,0},
-  {0,0,0}
-};
+//Random number generator. Use int random(lowest,highest);
+int random(int newLowest, int newHighest){
+  int lowest = newLowest, highest = newHighest;
+  int range = (highest - lowest) + 1;
+  int randomNumber = lowest+int(range*rand()/(RAND_MAX + 1.0));
+  return randomNumber;
+}
 
 //Thick Lines
-void thick_line(BITMAP *bmp, float x, float y, float x_, float y_,float thickness, int color){
+void thick_line( BITMAP *bmp, float x, float y, float x_, float y_,float thickness, int color){
   float dx = x - x_;
   float dy = y - y_;
   float d = sqrtf(dx * dx + dy * dy);
@@ -83,27 +92,28 @@ void thick_line(BITMAP *bmp, float x, float y, float x_, float y_,float thicknes
 }
 
 //Fade in
-void highcolor_fade_in(BITMAP* bmp_orig, int speed){
+void highcolor_fade_in( BITMAP* bmp_orig, int speed){
   BITMAP* bmp_buff;
 
-  if((bmp_buff=create_bitmap(SCREEN_W,SCREEN_H))){
+  if( (bmp_buff = create_bitmap(SCREEN_W,SCREEN_H))){
     int a;
-    if (speed<=0)speed=16;
+    if (speed <= 0)
+      speed = 16;
 
-    for(a=0;a<256;a+=speed){
-      clear(bmp_buff);
-      set_trans_blender(0,0,0,a);
-      draw_trans_sprite(bmp_buff,bmp_orig,0,0);
+    for( a = 0; a < 256; a += speed){
+      clear( bmp_buff);
+      set_trans_blender( 0, 0, 0, a);
+      draw_trans_sprite( bmp_buff, bmp_orig, 0, 0);
       vsync();
-      blit(bmp_buff,screen,0,0,0,0,SCREEN_W,SCREEN_H);
+      draw_trans_sprite( screen, bmp_buff, 0, 0);
     }
     destroy_bitmap(bmp_buff);
   }
-  blit(bmp_orig,screen,0,0,0,0,SCREEN_W,SCREEN_H);
+  draw_trans_sprite( screen, bmp_orig, 0, 0);
 }
 
 //Fade out
-void highcolor_fade_out(int speed){
+void highcolor_fade_out( int speed){
   BITMAP* bmp_orig, *bmp_buff;
 
   if((bmp_orig=create_bitmap(SCREEN_W,SCREEN_H))){
@@ -119,48 +129,48 @@ void highcolor_fade_out(int speed){
          vsync();
          blit(bmp_buff,screen,0,0,0,0,SCREEN_W,SCREEN_H);
       }
-    destroy_bitmap(bmp_buff);
+      destroy_bitmap(bmp_buff);
     }
     destroy_bitmap(bmp_orig);
   }
-  rectfill(screen,0,0,SCREEN_W,SCREEN_H,makecol(255,0,0));
 }
 
 //Sets up game (bitmaps, sounds, ect.)
-void setup(bool first){
-
+void setup( bool first){
   //Assigns variables
   x = 0;
   y = 0;
-  selector = 0;
   gridimage = 0;
 
   //Refreshes game board
-  for (int i = 0; i < 4; i++){
-    for (int t = 0; t < 4; t++){
+  for( int i = 0; i < 4; i++){
+    for( int t = 0; t < 4; t++){
       gridarray[i][t] = 0;
     }
   }
 
-  if(first){
+  if( first){
+    // Allegro Stuff
     allegro_init();
     alpng_init();
     install_keyboard();
     install_mouse();
-    set_color_depth(32);
-    set_gfx_mode(GFX_AUTODETECT_WINDOWED, 300, 300, 0, 0);
-    install_sound(DIGI_AUTODETECT,MIDI_AUTODETECT,".");
-    set_window_title("Tic Tac Toe");
+    install_sound( DIGI_AUTODETECT,MIDI_AUTODETECT,".");
+    set_window_title( "A.D.S. Games - Tic Tac Toe");
 
+    // Graphics
+    set_color_depth( 32);
+    set_gfx_mode( GFX_AUTODETECT_WINDOWED, 300, 300, 0, 0);
+
+    // Init variables
     gameRunning = true;
-
     turn = 0;
-
+    selector = 0;
     soundfx = true;
     difficulty = 1;
-    gameScreen = 0;
+    gameScreen = 1;
 
-    //Sets button images
+    // Sets button images
     one_player.set_images( "images/buttons/one_player.png", "images/buttons/one_player_hover.png");
     two_player.set_images( "images/buttons/two_player.png", "images/buttons/two_player_hover.png");
     quit.set_images( "images/buttons/quit.png", "images/buttons/quit_hover.png");
@@ -168,29 +178,36 @@ void setup(bool first){
     sound.set_images( "images/buttons/sound_on.png", "images/buttons/sound_on_hover.png");
     difficulty_b.set_images( "images/buttons/medium.png", "images/buttons/medium_hover.png");
 
-    //Assigns bitmaps
+    // Assigns bitmaps
     buffer = create_bitmap( 300, 300);
     grid = load_bitmap( "images/grid.png", NULL);
-    X = load_bitmap( "images/x.png", NULL);
-    O = load_bitmap( "images/o.png", NULL);
+    img_x = load_bitmap( "images/x.png", NULL);
+    img_o = load_bitmap( "images/o.png", NULL);
     blank = load_bitmap( "images/none.png", NULL);
-    selected = load_bitmap( "images/selected.png", NULL);
     xwin = load_bitmap( "images/xwin.png", NULL);
     owin = load_bitmap( "images/owin.png", NULL);
     catsgame = load_bitmap( "images/catsgame.png", NULL);
-    cursor = load_bitmap( "images/cursor.png", NULL);
     main_menu = load_bitmap( "images/main_menu.png", NULL);
 
-    //Assigns Sounds
-    win=load_sample( "sfx/win.wav");
-    lose=load_sample( "sfx/lose.wav");
-    cat=load_sample( "sfx/catsgame.wav");
-    place=load_sample( "sfx/place.wav");
+    cursor[0] = load_bitmap( "images/cursor.png", NULL);
+    cursor[1] = load_bitmap( "images/cursor_x.png", NULL);
+    cursor[2] = load_bitmap( "images/cursor_o.png", NULL);
 
-    //Creates random number generator
-    srand ( time(NULL) );
+    selected[0] = load_bitmap( "images/selected.png", NULL);
+    selected[1] = load_bitmap( "images/selected2.png", NULL);
+    selected[2] = load_bitmap( "images/selected3.png", NULL);
+    selected[3] = load_bitmap( "images/selected4.png", NULL);
 
-    //Sets button positions
+    // Assigns Sounds
+    win = load_sample( "sfx/win.wav");
+    lose = load_sample( "sfx/lose.wav");
+    cat = load_sample( "sfx/catsgame.wav");
+    place = load_sample( "sfx/place.wav");
+
+    // Seeds random number generator
+    srand ( time(NULL));
+
+    // Sets button positions
     one_player.set_position( 50, 70);
     two_player.set_position( 50, 130);
     quit.set_position( 50, 190);
@@ -202,350 +219,155 @@ void setup(bool first){
 
 //Performs unique one player actions
 void gameOne(){
-
-  //Chooses which tile is selected based on mouse position
-  for( int i = 0; i < 3; i++){
-    for( int t = 0; t < 3; t++){
-      selectedarray[i][t] = 0;
-      if( (mouse_x / 100) == i && (mouse_y / 100) == t && !menu.get_hover()){
-        selectedarray[i][t] = 1;
-        x = i;
-        y = t;
-      }
-    }
-  }
-
   //Places x or o respectively
-  if( mouse_b & 1 && gridarray[x][y] == 0){
-    if( turn == 0){
+  if( turn == 0){
+    if( mouseListener::buttonPressed[1] && gridarray[x][y] == 0){
       gridarray[x][y] = 1;
       if( soundfx)
-        play_sample(place,255,122,1000,0);
+        play_sample( place, 255, 122, 1000, 0);
       turn = 1;
     }
   }
-
   //Opponent AI
-  if(turn == 1){
+  else if(turn == 1){
+    // If a move has been made
+    bool move_made = false;
 
-    //Ai checks for 3 in line os
-    //first row
-    if( gridarray[0][0] == 2 && gridarray[0][2] == 2 && gridarray[0][1] == 0 && difficulty > 1){
-      gridarray[0][1] = 2;
-    }
-    else if( gridarray[0][0] == 2 && gridarray[0][1] == 2 && gridarray[0][2] == 0 && difficulty > 1){
-      gridarray[0][2] = 2;
-    }
-    else if( gridarray[0][1] == 2 &&gridarray[0][2] == 2 && gridarray[0][0] == 0 && difficulty > 1){
-      gridarray[0][0] = 2;
-    }
-
-    //second row
-    else if(gridarray[1][0]==2&&gridarray[1][2]==2 &&gridarray[1][1]==0 && difficulty>1){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[1][0]==2&&gridarray[1][1]==2 &&gridarray[1][2]==0 && difficulty>1){
-      gridarray[1][2]=2;
-    }
-    else if(gridarray[1][1]==2&&gridarray[1][2]==2 &&gridarray[1][0]==0 && difficulty>1){
-      gridarray[1][0]=2;
-    }
-
-    //third row
-    else if(gridarray[2][0]==2&&gridarray[2][2]==2 &&gridarray[2][1]==0 && difficulty>1){
-      gridarray[2][1]=2;
-    }
-    else if(gridarray[2][0]==2&&gridarray[2][1]==2 &&gridarray[2][2]==0 && difficulty>1){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[2][1]==2&&gridarray[2][2]==2 &&gridarray[2][0]==0 && difficulty>1){
-      gridarray[2][0]=2;
-    }
-
-    //down left
-    else if(gridarray[0][0]==2&&gridarray[2][0]==2 &&gridarray[1][0]==0 && difficulty>1){
-      gridarray[1][0]=2;
-    }
-    else if(gridarray[0][0]==2&&gridarray[1][0]==2 &&gridarray[2][0]==0 && difficulty>1){
-      gridarray[2][0]=2;
-    }
-    else if(gridarray[1][0]==2&&gridarray[2][0]==2 &&gridarray[0][0]==0 && difficulty>1){
-      gridarray[0][0]=2;
-    }
-
-    //down center
-    else if(gridarray[0][1]==2&&gridarray[2][1]==2 &&gridarray[1][1]==0 && difficulty>1){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[0][1]==2&&gridarray[1][1]==2 &&gridarray[2][1]==0 && difficulty>1){
-      gridarray[2][1]=2;
-    }
-    else if(gridarray[1][0]==2&&gridarray[2][1]==2 &&gridarray[0][1]==0 && difficulty>1){
-      gridarray[0][1]=2;
-    }
-
-    //down right
-    else if(gridarray[0][2]==2&&gridarray[2][2]==2 &&gridarray[1][2]==0 && difficulty>1){
-      gridarray[1][2]=2;
-    }
-    else if(gridarray[0][2]==2&&gridarray[1][2]==2 &&gridarray[2][2]==0 && difficulty>1){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[1][2]==2&&gridarray[2][2]==2 &&gridarray[0][2]==0 && difficulty>1){
-      gridarray[0][2]=2;
-    }
-
-    //diagonal top left to bottom right
-    else if(gridarray[0][0]==2&&gridarray[2][2]==2 &&gridarray[1][1]==0 && difficulty>1){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[0][0]==2&&gridarray[1][1]==2 &&gridarray[2][2]==0 && difficulty>1){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[1][1]==2&&gridarray[2][2]==2 &&gridarray[0][0]==0 && difficulty>1){
-      gridarray[0][0]=2;
-    }
-
-    //diagonal top right to bottom left
-    else if(gridarray[2][0]==2&&gridarray[0][2]==2 &&gridarray[1][1]==0 && difficulty>1){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[2][0]==2&&gridarray[1][1]==2 &&gridarray[0][2]==0 && difficulty>1){
-      gridarray[0][2]=2;
-    }
-    else if(gridarray[1][1]==2&&gridarray[0][2]==2 &&gridarray[2][0]==0 && difficulty>1){
-      gridarray[2][0]=2;
-    }
-
-
-
-    //Ai checks for 3 in line xs
-    //first row
-    else if(gridarray[0][0]==1&&gridarray[0][2]==1 &&gridarray[0][1]==0 && difficulty>0){
-      gridarray[0][1]=2;
-    }
-    else if(gridarray[0][0]==1&&gridarray[0][1]==1 &&gridarray[0][2]==0 && difficulty>0){
-      gridarray[0][2]=2;
-    }
-    else if(gridarray[0][1]==1&&gridarray[0][2]==1 &&gridarray[0][0]==0 && difficulty>0){
-      gridarray[0][0]=2;
-    }
-
-    //second row
-    else if(gridarray[1][0]==1&&gridarray[1][2]==1 &&gridarray[1][1]==0 && difficulty>0){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[1][0]==1&&gridarray[1][1]==1 &&gridarray[1][2]==0 && difficulty>0){
-      gridarray[1][2]=2;
-    }
-    else if(gridarray[1][1]==1&&gridarray[1][2]==1 &&gridarray[1][0]==0 && difficulty>0){
-      gridarray[1][0]=2;
-    }
-
-    //third row
-    else if(gridarray[2][0]==1&&gridarray[2][2]==1 &&gridarray[2][1]==0 && difficulty>0){
-      gridarray[2][1]=2;
-    }
-    else if(gridarray[2][0]==1&&gridarray[2][1]==1 &&gridarray[2][2]==0 && difficulty>0){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[2][1]==1&&gridarray[2][2]==1 &&gridarray[2][0]==0 && difficulty>0){
-      gridarray[2][0]=2;
-    }
-
-    //down left
-    else if(gridarray[0][0]==1&&gridarray[2][0]==1 &&gridarray[1][0]==0 && difficulty>0){
-      gridarray[1][0]=2;
-    }
-    else if(gridarray[0][0]==1&&gridarray[1][0]==1 &&gridarray[2][0]==0 && difficulty>0){
-      gridarray[2][0]=2;
-    }
-    else if(gridarray[1][0]==1&&gridarray[2][0]==1 &&gridarray[0][0]==0 && difficulty>0){
-      gridarray[0][0]=2;
-    }
-
-    //down center
-    else if(gridarray[0][1]==1&&gridarray[2][1]==1 &&gridarray[1][1]==0 && difficulty>0){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[0][1]==1&&gridarray[1][1]==1 &&gridarray[2][1]==0 && difficulty>0){
-      gridarray[2][1]=2;
-    }
-    else if(gridarray[1][0]==1&&gridarray[2][1]==1 &&gridarray[0][1]==0 && difficulty>0){
-      gridarray[0][1]=2;
-    }
-
-    //down right
-    else if(gridarray[0][2]==1&&gridarray[2][2]==1 &&gridarray[1][2]==0 && difficulty>0){
-      gridarray[1][2]=2;
-    }
-    else if(gridarray[0][2]==1&&gridarray[1][2]==1 &&gridarray[2][2]==0 && difficulty>0){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[1][2]==1&&gridarray[2][2]==1 &&gridarray[0][2]==0 && difficulty>0){
-      gridarray[0][2]=2;
-    }
-
-    //diagonal top left to bottom right
-    else if(gridarray[0][0]==1&&gridarray[2][2]==1 &&gridarray[1][1]==0 && difficulty>0){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[0][0]==1&&gridarray[1][1]==1 &&gridarray[2][2]==0 && difficulty>0){
-      gridarray[2][2]=2;
-    }
-    else if(gridarray[1][1]==1&&gridarray[2][2]==1 &&gridarray[0][0]==0 && difficulty>0){
-      gridarray[0][0]=2;
-    }
-
-    //diagonal top right to bottom left
-    else if(gridarray[2][0]==1&&gridarray[0][2]==1 &&gridarray[1][1]==0 && difficulty>0){
-      gridarray[1][1]=2;
-    }
-    else if(gridarray[2][0]==1&&gridarray[1][1]==1 &&gridarray[0][2]==0 && difficulty>0){
-      gridarray[0][2]=2;
-    }
-    else if(gridarray[1][1]==1&&gridarray[0][2]==1 &&gridarray[2][0]==0 && difficulty>0){
-      gridarray[2][0]=2;
-    }
-
-    //else randomize place if above checks result in false
-    else{
-      int highest=3;
-      int lowest=0;
-      int range=(highest-lowest);
-      int random_integer = lowest+int(range*rand()/(RAND_MAX + 1.0));
-      int random_integer2 = lowest+int(range*rand()/(RAND_MAX + 1.0));
-      do{
-        if(gridarray[random_integer][random_integer2]==0){
-          gridarray[random_integer][random_integer2]=2;
-          turn=0;
-        }
-        else{
-          random_integer = lowest+int(range*rand()/(RAND_MAX + 1.0));
-          random_integer2 = lowest+int(range*rand()/(RAND_MAX + 1.0));
-        }
-        if(gridarray[0][0]!=0 && gridarray[0][1]!=0 && gridarray[0][2]!=0&&gridarray[1][0]!=0 && gridarray[1][1]!=0 && gridarray[1][2]!=0&&gridarray[2][0]!=0 && gridarray[2][1]!=0 && gridarray[2][2]!=0){
+    // Smart AI
+    for( int t = difficulty; t > 0; t--){
+      for( int i = 0; i < 3; i++){
+        // Across
+        if( !move_made && (gridarray[i][0] == t && gridarray[i][1] == t && gridarray[i][2] == 0 ||
+                           gridarray[i][0] == t && gridarray[i][1] == 0 && gridarray[i][2] == t ||
+                           gridarray[i][0] == 0 && gridarray[i][1] == t && gridarray[i][2] == t)){
+          if(gridarray[i][0] == 0)
+            gridarray[i][0] = 2;
+          else if(gridarray[i][1] == 0)
+            gridarray[i][1] = 2;
+          else if(gridarray[i][2] == 0)
+            gridarray[i][2] = 2;
+          move_made = true;
           break;
         }
-      }while(turn!=0);
-    }
-    if(soundfx==true)
-      play_sample(place,255,122,1500,0);
-    turn=0;
-  }
-}
-
-//Performs unique two player actions
-void gameTwo(){
-
-  //Chooses which tile is selected based on mouse position
-  for( int i=0; i<3; i++){
-    for( int t=0; t<3; t++){
-      selectedarray[i][t] = 0;
-      if( ( mouse_x / 100) == i && (mouse_y / 100) == t){
-        selectedarray[i][t] = 1;
-        x = i;
-        y = t;
+        // Down
+        else if( !move_made && (gridarray[0][i] == t && gridarray[1][i] == t && gridarray[2][i] == 0 ||
+                                gridarray[0][i] == t && gridarray[1][i] == 0 && gridarray[2][i] == t ||
+                                gridarray[0][i] == 0 && gridarray[1][i] == t && gridarray[2][i] == t)){
+          if(gridarray[0][i] == 0)
+            gridarray[0][i] = 2;
+          else if(gridarray[1][i] == 0)
+            gridarray[1][i] = 2;
+          else if(gridarray[2][i] == 0)
+            gridarray[2][i] = 2;
+          move_made = true;
+          break;
+        }
+      }
+      // Diagonal top left to bottom right
+      if( !move_made && (gridarray[0][0] == t && gridarray[1][1] == t && gridarray[2][2] == 0 ||
+                         gridarray[0][0] == t && gridarray[1][1] == 0 && gridarray[2][2] == t ||
+                         gridarray[0][0] == 0 && gridarray[1][1] == t && gridarray[2][2] == t)){
+        if(gridarray[0][0] == 0)
+          gridarray[0][0] = 2;
+        else if(gridarray[1][1] == 0)
+          gridarray[1][1] = 2;
+        else if(gridarray[2][2] == 0)
+          gridarray[2][2] = 2;
+        move_made = true;
+        break;
+      }
+      // Diagonal top right to bottom left
+      else if( !move_made && (gridarray[2][0] == t && gridarray[1][1] == t && gridarray[0][2] == 0 ||
+                              gridarray[2][0] == t && gridarray[1][1] == 0 && gridarray[0][2] == t ||
+                              gridarray[2][0] == 0 && gridarray[1][1] == t && gridarray[0][2] == t)){
+        if(gridarray[2][0] == 0)
+          gridarray[2][0] = 2;
+        else if(gridarray[1][1] == 0)
+          gridarray[1][1] = 2;
+        else if(gridarray[0][2] == 0)
+          gridarray[0][2] = 2;
+        move_made = true;
+        break;
       }
     }
-  }
+    // Revert to dumb ai
+    while( !move_made){
+      // No more moves available!
+      if(gridarray[0][0] != 0 && gridarray[0][1] != 0 && gridarray[0][2] != 0 &&
+         gridarray[1][0] != 0 && gridarray[1][1] != 0 && gridarray[1][2] != 0 &&
+         gridarray[2][0] != 0 && gridarray[2][1] != 0 && gridarray[2][2] != 0){
+        break;
+      }
 
-  //Places x or o respectively
-  if( mouse_b & 1 && gridarray[x][y] == 0 && !menu.get_hover()){
-    if( turn == 0){
-      gridarray[x][y] = 1;
-      if(soundfx)
-        play_sample( place, 255, 122, 1000, 0);
-      turn = 1;
-      cursor = load_bitmap( "images/cursor_o.png", NULL);
+      // Choose random place
+      int random_integer = random( 0, 2);
+      int random_integer2 = random( 0, 2);
+      if( gridarray[random_integer][random_integer2] == 0){
+        gridarray[random_integer][random_integer2] = 2;
+        move_made = true;
+      }
     }
-    else if(turn==1){
-      gridarray[x][y]=2;
-      if(soundfx)
-        play_sample( place, 255, 122, 1000, 0);
+    if( soundfx)
+      play_sample(place,255,122,1500,0);
+
+    if( move_made)
       turn = 0;
-      cursor = load_bitmap( "images/cursor_x.png", NULL);
-    }
   }
 }
 
+// Performs unique two player actions
+void gameTwo(){
+  // Places x or o respectively
+  if( mouseListener::buttonPressed[1] && gridarray[x][y] == 0 && !menu.get_hover()){
+    gridarray[x][y] = turn + 1;
+    turn = (turn + 1) % 2;
+    if(soundfx)
+      play_sample( place, 255, 122, 1000, 0);
+  }
+}
 
 //Performs main game actions
 void game(){
-  set_alpha_blender();
-
-  // Splash
-  if(gameScreen==0){
-    gameScreen = 1;
-  }
+  // Listen to mouse
+  m_listener.update();
 
   // Menu
-  else if(gameScreen == 1){
-    //Draws grid
-    draw_sprite(buffer,grid,0,0);
-
-    //Draws tiles on board
-    for (int i = 0; i < 4; i++){
-      for (int t = 0; t < 4; t++){
-        if(gridarray[i][t]==0){draw_sprite( buffer, blank, (i)*100, (t)*100);}
-        else if(gridarray[i][t]==1){draw_sprite( buffer, X, (i)*100, (t)*100);}
-        else if(gridarray[i][t]==2){draw_sprite( buffer, O, (i)*100, (t)*100);}
-      }
-    }
-
-    //Draws menu
-    draw_trans_sprite( buffer, main_menu, 0, 0);
-
-    //Draws Buttons
-    one_player.draw(buffer);
-    two_player.draw(buffer);
-    quit.draw(buffer);
-    sound.draw(buffer);
-    difficulty_b.draw(buffer);
-
+  if(gameScreen == 1){
     //Checks for mouse press
-    if( mouse_b & 1){
+    if( mouseListener::buttonPressed[1]){
       if( one_player.get_hover()){
         gameScreen = 2;
-        cursor=load_bitmap( "images/cursor_x.png", NULL);
+        turn = 0;
         setup( false);
         highcolor_fade_out( 16);
-        highcolor_fade_in( grid, 16);
+        draw( false);
+        highcolor_fade_in( buffer, 16);
       }
-      else if(two_player.get_hover()){
+      else if( two_player.get_hover()){
         gameScreen = 3;
-        cursor=load_bitmap( "images/cursor_x.png", NULL);
-        setup(false);
-        highcolor_fade_out(16);
-        highcolor_fade_in(grid, 16);
+        turn = 0;
+        setup( false);
+        highcolor_fade_out( 16);
+        draw( false);
+        highcolor_fade_in( buffer, 16);
       }
-      else if(difficulty_b.get_hover()==true){
-        if(difficulty==2){
-          difficulty=0;
+      else if( difficulty_b.get_hover() == true){
+        if(difficulty == 2)
           difficulty_b.set_images("images/buttons/easy.png","images/buttons/easy_hover.png");
-          rest(160);
-        }
-        else if(difficulty==0){
-          difficulty=1;
+        else if(difficulty == 0)
           difficulty_b.set_images("images/buttons/medium.png","images/buttons/medium_hover.png");
-          rest(160);
-        }
-        else if(difficulty==1){
-          difficulty=2;
+        else if(difficulty == 1)
           difficulty_b.set_images("images/buttons/hard.png","images/buttons/hard_hover.png");
-          rest(160);
-        }
+        difficulty = (difficulty + 1) % 3;
       }
       else if(sound.get_hover()==true){
         if(soundfx==true){
-          soundfx=false;
+          soundfx = false;
           sound.set_images("images/buttons/sound_off.png","images/buttons/sound_off_hover.png");
-          rest(160);
         }
         else if(soundfx==false){
           soundfx=true;
           sound.set_images("images/buttons/sound_on.png","images/buttons/sound_on_hover.png");
-          rest(160);
         }
       }
       else if(quit.get_hover()==true){
@@ -555,7 +377,11 @@ void game(){
   }
 
   // One player and 2 player
-  else if(gameScreen==2||gameScreen==3){
+  else if( gameScreen == 2 || gameScreen == 3){
+    // Chooses which tile is selected based on mouse position
+    x = mouse_x / 100;
+    y = mouse_y / 100;
+
     //Check and perform x winning action
     if(gridarray[0][0]==1 && gridarray[0][1]==1 && gridarray[0][2]==1||gridarray[1][0]==1 && gridarray[1][1]==1 && gridarray[1][2]==1||gridarray[2][0]==1 && gridarray[2][1]==1 && gridarray[2][2]==1||gridarray[0][0]==1 && gridarray[1][0]==1 && gridarray[2][0]==1||gridarray[0][1]==1 && gridarray[1][1]==1 && gridarray[2][1]==1||gridarray[0][2]==1 && gridarray[1][2]==1 && gridarray[2][2]==1||gridarray[0][0]==1 && gridarray[1][1]==1 && gridarray[2][2]==1||gridarray[2][0]==1 && gridarray[1][1]==1 && gridarray[0][2]==1){
       if(gridarray[0][0]==1 && gridarray[0][1]==1 && gridarray[0][2]==1)thick_line(buffer, 50, 50, 50, 250, 10, makecol(255,0,0));
@@ -567,21 +393,18 @@ void game(){
       if(gridarray[0][0]==1 && gridarray[1][1]==1 && gridarray[2][2]==1)thick_line(buffer, 50, 50, 250, 250, 10, makecol(255,0,0));
       if(gridarray[2][0]==1 && gridarray[1][1]==1 && gridarray[0][2]==1)thick_line(buffer, 250, 50, 50, 250, 10, makecol(255,0,0));
 
-      if(soundfx==true){
-        play_sample(win,255,122,1000,0);
-      }
-      draw_trans_sprite(buffer,xwin,0,0);
-      draw_sprite(screen,buffer,0,0);
-      rest(2000);
-      if(gameScreen == 3){
-        cursor = load_bitmap( "images/cursor_x.png", NULL);
-      }
+      if( soundfx)
+        play_sample( win, 255, 122, 1000, 0);
+
+      draw_trans_sprite( buffer, xwin, 0, 0);
+      draw_sprite( screen, buffer, 0, 0);
+      rest( 2000);
       turn = 0;
-      setup(false);
+      setup( false);
     }
 
     //Check and perform o winning action
-    if(gridarray[0][0]==2 && gridarray[0][1]==2 && gridarray[0][2]==2||gridarray[1][0]==2 && gridarray[1][1]==2 && gridarray[1][2]==2||gridarray[2][0]==2 && gridarray[2][1]==2 && gridarray[2][2]==2||gridarray[0][0]==2 && gridarray[1][0]==2 && gridarray[2][0]==2||gridarray[0][1]==2 && gridarray[1][1]==2 && gridarray[2][1]==2||gridarray[0][2]==2 && gridarray[1][2]==2 && gridarray[2][2]==2||gridarray[0][0]==2 && gridarray[1][1]==2 && gridarray[2][2]==2||gridarray[2][0]==2 && gridarray[1][1]==2 && gridarray[0][2]==2){
+    else if(gridarray[0][0]==2 && gridarray[0][1]==2 && gridarray[0][2]==2||gridarray[1][0]==2 && gridarray[1][1]==2 && gridarray[1][2]==2||gridarray[2][0]==2 && gridarray[2][1]==2 && gridarray[2][2]==2||gridarray[0][0]==2 && gridarray[1][0]==2 && gridarray[2][0]==2||gridarray[0][1]==2 && gridarray[1][1]==2 && gridarray[2][1]==2||gridarray[0][2]==2 && gridarray[1][2]==2 && gridarray[2][2]==2||gridarray[0][0]==2 && gridarray[1][1]==2 && gridarray[2][2]==2||gridarray[2][0]==2 && gridarray[1][1]==2 && gridarray[0][2]==2){
       if(gridarray[0][0]==2 && gridarray[0][1]==2 && gridarray[0][2]==2)thick_line(buffer, 50, 50, 50, 250, 10, makecol(255,0,0));
       if(gridarray[1][0]==2 && gridarray[1][1]==2 && gridarray[1][2]==2)thick_line(buffer, 150, 50, 150, 250, 10, makecol(255,0,0));
       if(gridarray[2][0]==2 && gridarray[2][1]==2 && gridarray[2][2]==2)thick_line(buffer, 250, 50, 250, 250, 10, makecol(255,0,0));
@@ -591,98 +414,114 @@ void game(){
       if(gridarray[0][0]==2 && gridarray[1][1]==2 && gridarray[2][2]==2)thick_line(buffer, 50, 50, 250, 250, 10, makecol(255,0,0));
       if(gridarray[2][0]==2 && gridarray[1][1]==2 && gridarray[0][2]==2)thick_line(buffer, 250, 50, 50, 250, 10, makecol(255,0,0));
 
-      if(soundfx==true)
-        play_sample(lose,255,122,1000,0);
-      draw_trans_sprite(buffer,owin,0,0);
-      draw_sprite(screen,buffer,0,0);
-      rest(2000);
-      if(gameScreen == 3){
-        cursor = load_bitmap( "images/cursor_o.png", NULL);
-      }
+      if( soundfx)
+        play_sample( lose, 255, 122, 1000, 0);
+      draw_trans_sprite( buffer, owin, 0, 0);
+      draw_sprite( screen, buffer, 0, 0);
+      rest( 2000);
       turn = 1;
-      setup(false);
+      setup( false);
     }
 
     //Check and perform cats game action
-    if(gridarray[0][0] !=0 && gridarray[1][0] !=0 && gridarray[2][0] !=0 && gridarray[0][1] !=0&& gridarray[1][1] !=0&& gridarray[2][1] !=0&& gridarray[0][2] !=0&& gridarray[1][2] !=0&& gridarray[2][2] !=0){
-      if(soundfx==true)play_sample(cat,255,122,1000,0);
-      draw_trans_sprite(buffer,catsgame,0,0);
-      draw_sprite(screen,buffer,0,0);
-      rest(2000);
+    else if( gridarray[0][0] != 0 && gridarray[1][0] != 0 && gridarray[2][0] != 0 &&
+        gridarray[0][1] != 0 && gridarray[1][1] != 0 && gridarray[2][1] != 0 &&
+        gridarray[0][2] != 0 && gridarray[1][2] != 0 && gridarray[2][2] != 0){
+      if( soundfx)
+        play_sample( cat, 255, 122, 1000, 0);
+      draw_trans_sprite( buffer, catsgame, 0, 0);
+      draw_sprite( screen, buffer, 0, 0);
+      rest( 2000);
       turn = 1;
-      setup(false);
+      setup( false);
     }
 
     //Runs game function
-    if(gameScreen == 2){
+    if( gameScreen == 2)
       gameOne();
-    }
-    else if(gameScreen == 3){
+    else if( gameScreen == 3)
       gameTwo();
+
+    //Change selector sprite
+    if( key[KEY_S]){
+      selector = (selector + 1) % 4;
+      rest(200);
     }
 
+    //Checks for mouse press
+    if( mouseListener::buttonPressed[1]){
+      if( menu.get_hover() == true){
+        gameScreen = 1;
+        highcolor_fade_out(16);
+        draw( false);
+        highcolor_fade_in( buffer, 16);
+      }
+    }
+  }
+}
 
+// Draw loop
+void draw( bool to_screen){
+  // Allow transparency
+  set_alpha_blender();
+
+  // Menu
+  if(gameScreen == 1){
     //Draws grid
-    draw_sprite(buffer,grid,0,0);
+    draw_sprite( buffer, grid, 0, 0);
 
     //Draws tiles on board
-    for (int i = 0; i < 4; i++){
-      for (int t = 0; t < 4; t++){
-        if(gridarray[i][t]==0){draw_sprite( buffer, blank, (i)*100, (t)*100);}
-        else if(gridarray[i][t]==1){draw_sprite( buffer, X, (i)*100, (t)*100);}
-        else if(gridarray[i][t]==2){draw_sprite( buffer, O, (i)*100, (t)*100);}
+    for( int i = 0; i < 4; i++){
+      for( int t = 0; t < 4; t++){
+        if( gridarray[i][t] == 0)
+          draw_sprite( buffer, blank, (i)*100, (t)*100);
+        else if( gridarray[i][t] == 1)
+          draw_sprite( buffer, img_x, (i)*100, (t)*100);
+        else if( gridarray[i][t] == 2)
+          draw_sprite( buffer, img_o, (i)*100, (t)*100);
+      }
+    }
+
+    //Draws menu
+    draw_trans_sprite( buffer, main_menu, 0, 0);
+
+    //Draws Buttons
+    one_player.draw( buffer);
+    two_player.draw( buffer);
+    quit.draw( buffer);
+    sound.draw( buffer);
+    difficulty_b.draw( buffer);
+  }
+  // One player and 2 player
+  else if( gameScreen == 2 || gameScreen == 3){
+    //Draws grid
+    draw_sprite( buffer, grid, 0, 0);
+
+    //Draws tiles on board
+    for( int i = 0; i < 4; i++){
+      for( int t = 0; t < 4; t++){
+        if( gridarray[i][t] == 0)
+          draw_sprite( buffer, blank, i * 100, t * 100);
+        else if( gridarray[i][t] == 1)
+          draw_sprite( buffer, img_x, i * 100, t * 100);
+        else if( gridarray[i][t] == 2)
+          draw_sprite( buffer, img_o, i * 100, t * 100);
       }
     }
 
     //Draws selection tile
-    for (int i = 0; i < 4; i++){
-      for (int t = 0; t < 4; t++){
-        if(selectedarray[i][t]==1){draw_sprite( buffer, selected, (i)*100, (t)*100);}
-      }
-    }
-
-    //Change selector sprite
-    if( key[KEY_S]){
-      if(selector==0){
-        selected=load_bitmap( "images/selected2.png", NULL);
-        selector=1;
-        rest(200);
-      }
-      else if(selector==1){
-        selected=load_bitmap( "images/selected3.png", NULL);
-        selector=2;
-        rest(200);
-      }
-      else if(selector==2){
-        selected=load_bitmap( "images/selected4.png", NULL);
-        selector=3;
-        rest(200);
-      }
-      else if(selector==3){
-        selected=load_bitmap( "images/selected.png", NULL);
-        selector=0;
-        rest(200);
-      }
-    }
+    draw_sprite( buffer, selected[selector], x * 100, y * 100);
 
     //Draws Menu Button
     menu.draw(buffer);
-
-    //Checks for mouse press
-    if(mouse_b&1){
-      if(menu.get_hover()==true){
-        cursor=load_bitmap("images/cursor.png", NULL);
-        gameScreen = 1;
-        highcolor_fade_out(16);
-        highcolor_fade_in(main_menu, 16);
-      }
-    }
   }
+
   //Draws mouse cursor
-  draw_sprite(buffer,cursor,mouse_x,mouse_y);
+  draw_sprite( buffer, cursor[(turn + 1) * (gameScreen != 1)], mouse_x, mouse_y);
 
   //Draws buffer
-  draw_sprite(screen,buffer,0,0);
+  if( to_screen)
+    draw_sprite( screen, buffer, 0, 0);
 }
 
 // Program starts here
@@ -693,15 +532,19 @@ int main() {
   // Run game loop while game running
   while( !key[KEY_ESC] && gameRunning){
     game();
+    draw( true);
   }
 
   // Destroy images
   destroy_bitmap( buffer);
   destroy_bitmap( grid);
-  destroy_bitmap( X);
-  destroy_bitmap( O);
+  destroy_bitmap( img_x);
+  destroy_bitmap( img_o);
   destroy_bitmap( blank);
-  destroy_bitmap( selected);
+  destroy_bitmap( selected[0]);
+  destroy_bitmap( selected[1]);
+  destroy_bitmap( selected[2]);
+  destroy_bitmap( selected[3]);
   destroy_bitmap( xwin);
   destroy_bitmap( owin);
   destroy_bitmap( catsgame);
