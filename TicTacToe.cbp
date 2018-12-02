@@ -24,11 +24,17 @@
 		<Linker>
 			<Add library="alleg" />
 		</Linker>
+		<Unit filename="include/GameState.h" />
 		<Unit filename="include/button.h" />
 		<Unit filename="include/mouseListener.h" />
 		<Unit filename="res/resources.rc">
 			<Option compilerVar="WINDRES" />
 		</Unit>
+		<Unit filename="src/GameState.cpp" />
+		<Unit filename="src/aexlib/draw/animation.cpp" />
+		<Unit filename="src/aexlib/draw/animation.h" />
+		<Unit filename="src/aexlib/draw/primitive.cpp" />
+		<Unit filename="src/aexlib/draw/primitive.h" />
 		<Unit filename="src/button.cpp" />
 		<Unit filename="src/main.cpp" />
 		<Unit filename="src/mouseListener.cpp" />
