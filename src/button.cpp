@@ -1,5 +1,7 @@
 #include "button.h"
 
+#include <loadpng.h>
+
 using namespace std;
 
 Button::Button() {
@@ -24,8 +26,8 @@ void Button::set_images(std::string image1, std::string image2) {
     destroy_bitmap(images[1]);
 
   // Set new images
-  images[0] = load_bitmap(image1.c_str(), NULL);
-  images[1] = load_bitmap(image2.c_str(), NULL);
+  images[0] = load_png(image1.c_str(), NULL);
+  images[1] = load_png(image2.c_str(), NULL);
 
   // Get size from images
   if(images[0] != NULL) {
