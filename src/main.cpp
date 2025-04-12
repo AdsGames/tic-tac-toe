@@ -1,33 +1,26 @@
-#include <allegro.h>
-#include <loadpng.h>
+#include <asw/asw.h>
+#include <array>
 
 #include "button.h"
-#include "mouseListener.h"
-
-#include "aexlib/draw/animation.h"
-#include "aexlib/draw/primitive.h"
-
-// Mouse listener
-mouseListener m_listener;
 
 // Creates images
-BITMAP* buffer;
-BITMAP* grid;
-BITMAP* img_x;
-BITMAP* img_o;
-BITMAP* blank;
-BITMAP* xwin;
-BITMAP* owin;
-BITMAP* catsgame;
-BITMAP* cursor[3];
-BITMAP* main_menu;
-BITMAP* selected[4];
+asw::Texture buffer;
+asw::Texture grid;
+asw::Texture img_x;
+asw::Texture img_o;
+asw::Texture blank;
+asw::Texture xwin;
+asw::Texture owin;
+asw::Texture catsgame;
+asw::Texture cursor[3];
+asw::Texture main_menu;
+asw::Texture selected[4];
 
 // Create sounds
-SAMPLE* win;
-SAMPLE* lose;
-SAMPLE* cat;
-SAMPLE* place;
+asw::Sample win;
+asw::Sample lose;
+asw::Sample cat;
+asw::Sample place;
 
 // Creates Butons
 Button one_player;
@@ -42,55 +35,36 @@ int x;
 int y;
 int turn;
 int selector;
-int gridimage;
 int difficulty;
-int mode;
-int soundfx;
+bool soundfx;
 int gameScreen;
-bool gameRunning;
-
-// Draw function
-void draw(bool to_screen);
 
 // Array of the game board
-int gridarray[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
-
-// Random number generator. Use int random(lowest,highest);
-int random(int newLowest, int newHighest) {
-  int lowest = newLowest, highest = newHighest;
-  int range = (highest - lowest) + 1;
-  int randomNumber = lowest + int(range * rand() / (RAND_MAX + 1.0));
-  return randomNumber;
-}
+std::array<std::array<int, 3>, 3> gridarray = {{
+    {0, 0, 0},
+    {0, 0, 0},
+    {0, 0, 0},
+}};
 
 // Sets up game (bitmaps, sounds, ect.)
 void setup(bool first) {
   // Assigns variables
   x = 0;
   y = 0;
-  gridimage = 0;
 
   // Refreshes game board
-  for (int i = 0; i < 4; i++) {
-    for (int t = 0; t < 4; t++) {
-      gridarray[i][t] = 0;
-    }
-  }
+  gridarray = {{
+      {0, 0, 0},
+      {0, 0, 0},
+      {0, 0, 0},
+  }};
 
   if (first) {
     // Allegro Stuff
-    allegro_init();
-    install_keyboard();
-    install_mouse();
-    install_sound(DIGI_AUTODETECT, MIDI_AUTODETECT, ".");
-    set_window_title("A.D.S. Games - Tic Tac Toe");
-
-    // Graphics
-    set_color_depth(32);
-    set_gfx_mode(GFX_AUTODETECT_WINDOWED, 300, 300, 0, 0);
+    asw::core::init(300, 300);
+    asw::display::setTitle("A.D.S. Games - Tic Tac Toe");
 
     // Init variables
-    gameRunning = true;
     turn = 0;
     selector = 0;
     soundfx = true;
@@ -98,45 +72,43 @@ void setup(bool first) {
     gameScreen = 1;
 
     // Sets button images
-    one_player.set_images("images/buttons/one_player.png",
-                          "images/buttons/one_player_hover.png");
-    two_player.set_images("images/buttons/two_player.png",
-                          "images/buttons/two_player_hover.png");
-    quit.set_images("images/buttons/quit.png", "images/buttons/quit_hover.png");
-    menu.set_images("images/buttons/menu.png", "images/buttons/menu_hover.png");
-    sound.set_images("images/buttons/sound_on.png",
-                     "images/buttons/sound_on_hover.png");
-    difficulty_b.set_images("images/buttons/medium.png",
-                            "images/buttons/medium_hover.png");
+    one_player.set_images("assets/images/buttons/one_player.png",
+                          "assets/images/buttons/one_player_hover.png");
+    two_player.set_images("assets/images/buttons/two_player.png",
+                          "assets/images/buttons/two_player_hover.png");
+    quit.set_images("assets/images/buttons/quit.png",
+                    "assets/images/buttons/quit_hover.png");
+    menu.set_images("assets/images/buttons/menu.png",
+                    "assets/images/buttons/menu_hover.png");
+    sound.set_images("assets/images/buttons/sound_on.png",
+                     "assets/images/buttons/sound_on_hover.png");
+    difficulty_b.set_images("assets/images/buttons/medium.png",
+                            "assets/images/buttons/medium_hover.png");
 
     // Assigns bitmaps
-    buffer = create_bitmap(300, 300);
-    grid = load_png("images/grid.png", NULL);
-    img_x = load_png("images/x.png", NULL);
-    img_o = load_png("images/o.png", NULL);
-    blank = load_png("images/none.png", NULL);
-    xwin = load_png("images/xwin.png", NULL);
-    owin = load_png("images/owin.png", NULL);
-    catsgame = load_png("images/catsgame.png", NULL);
-    main_menu = load_png("images/main_menu.png", NULL);
+    grid = asw::assets::loadTexture("assets/images/grid.png");
+    img_x = asw::assets::loadTexture("assets/images/x.png");
+    img_o = asw::assets::loadTexture("assets/images/o.png");
+    blank = asw::assets::loadTexture("assets/images/none.png");
+    xwin = asw::assets::loadTexture("assets/images/xwin.png");
+    owin = asw::assets::loadTexture("assets/images/owin.png");
+    catsgame = asw::assets::loadTexture("assets/images/catsgame.png");
+    main_menu = asw::assets::loadTexture("assets/images/main_menu.png");
 
-    cursor[0] = load_png("images/cursor.png", NULL);
-    cursor[1] = load_png("images/cursor_x.png", NULL);
-    cursor[2] = load_png("images/cursor_o.png", NULL);
+    cursor[0] = asw::assets::loadTexture("assets/images/cursor.png");
+    cursor[1] = asw::assets::loadTexture("assets/images/cursor_x.png");
+    cursor[2] = asw::assets::loadTexture("assets/images/cursor_o.png");
 
-    selected[0] = load_png("images/selected.png", NULL);
-    selected[1] = load_png("images/selected2.png", NULL);
-    selected[2] = load_png("images/selected3.png", NULL);
-    selected[3] = load_png("images/selected4.png", NULL);
+    selected[0] = asw::assets::loadTexture("assets/images/selected.png");
+    selected[1] = asw::assets::loadTexture("assets/images/selected2.png");
+    selected[2] = asw::assets::loadTexture("assets/images/selected3.png");
+    selected[3] = asw::assets::loadTexture("assets/images/selected4.png");
 
     // Assigns Sounds
-    win = load_sample("sfx/win.wav");
-    lose = load_sample("sfx/lose.wav");
-    cat = load_sample("sfx/catsgame.wav");
-    place = load_sample("sfx/place.wav");
-
-    // Seeds random number generator
-    srand(time(NULL));
+    win = asw::assets::loadSample("assets/sfx/win.wav");
+    lose = asw::assets::loadSample("assets/sfx/lose.wav");
+    cat = asw::assets::loadSample("assets/sfx/catsgame.wav");
+    place = asw::assets::loadSample("assets/sfx/place.wav");
 
     // Sets button positions
     one_player.set_position(50, 70);
@@ -152,10 +124,12 @@ void setup(bool first) {
 void gameOne() {
   // Places x or o respectively
   if (turn == 0) {
-    if (mouseListener::buttonPressed[1] && gridarray[x][y] == 0) {
+    if (asw::input::wasButtonPressed(asw::input::MouseButton::LEFT) &&
+        gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
-      if (soundfx)
-        play_sample(place, 255, 122, 1000, 0);
+      if (soundfx) {
+        asw::sound::play(place, 255, 122, 0);
+      }
       turn = 1;
     }
   }
@@ -174,12 +148,13 @@ void gameOne() {
                                gridarray[i][2] == t ||
                            gridarray[i][0] == 0 && gridarray[i][1] == t &&
                                gridarray[i][2] == t)) {
-          if (gridarray[i][0] == 0)
+          if (gridarray[i][0] == 0) {
             gridarray[i][0] = 2;
-          else if (gridarray[i][1] == 0)
+          } else if (gridarray[i][1] == 0) {
             gridarray[i][1] = 2;
-          else if (gridarray[i][2] == 0)
+          } else if (gridarray[i][2] == 0) {
             gridarray[i][2] = 2;
+          }
           move_made = true;
           break;
         }
@@ -190,12 +165,13 @@ void gameOne() {
                                     gridarray[2][i] == t ||
                                 gridarray[0][i] == 0 && gridarray[1][i] == t &&
                                     gridarray[2][i] == t)) {
-          if (gridarray[0][i] == 0)
+          if (gridarray[0][i] == 0) {
             gridarray[0][i] = 2;
-          else if (gridarray[1][i] == 0)
+          } else if (gridarray[1][i] == 0) {
             gridarray[1][i] = 2;
-          else if (gridarray[2][i] == 0)
+          } else if (gridarray[2][i] == 0) {
             gridarray[2][i] = 2;
+          }
           move_made = true;
           break;
         }
@@ -207,12 +183,13 @@ void gameOne() {
                              gridarray[2][2] == t ||
                          gridarray[0][0] == 0 && gridarray[1][1] == t &&
                              gridarray[2][2] == t)) {
-        if (gridarray[0][0] == 0)
+        if (gridarray[0][0] == 0) {
           gridarray[0][0] = 2;
-        else if (gridarray[1][1] == 0)
+        } else if (gridarray[1][1] == 0) {
           gridarray[1][1] = 2;
-        else if (gridarray[2][2] == 0)
+        } else if (gridarray[2][2] == 0) {
           gridarray[2][2] = 2;
+        }
         move_made = true;
         break;
       }
@@ -223,12 +200,13 @@ void gameOne() {
                                   gridarray[0][2] == t ||
                               gridarray[2][0] == 0 && gridarray[1][1] == t &&
                                   gridarray[0][2] == t)) {
-        if (gridarray[2][0] == 0)
+        if (gridarray[2][0] == 0) {
           gridarray[2][0] = 2;
-        else if (gridarray[1][1] == 0)
+        } else if (gridarray[1][1] == 0) {
           gridarray[1][1] = 2;
-        else if (gridarray[0][2] == 0)
+        } else if (gridarray[0][2] == 0) {
           gridarray[0][2] = 2;
+        }
         move_made = true;
         break;
       }
@@ -245,88 +223,81 @@ void gameOne() {
       }
 
       // Choose random place
-      int random_integer = random(0, 2);
-      int random_integer2 = random(0, 2);
+      const int random_integer = asw::random::between(0, 2);
+      const int random_integer2 = asw::random::between(0, 2);
       if (gridarray[random_integer][random_integer2] == 0) {
         gridarray[random_integer][random_integer2] = 2;
         move_made = true;
       }
     }
-    if (soundfx)
-      play_sample(place, 255, 122, 1500, 0);
+    if (soundfx) {
+      asw::sound::play(place, 255, 122, 0);
+    }
 
-    if (move_made)
+    if (move_made) {
       turn = 0;
+    }
   }
 }
 
 // Performs unique two player actions
 void gameTwo() {
   // Places x or o respectively
-  if (mouseListener::buttonPressed[1] && gridarray[x][y] == 0 &&
-      !menu.get_hover()) {
+  if (asw::input::wasButtonPressed(asw::input::MouseButton::LEFT) &&
+      gridarray[x][y] == 0 && !menu.get_hover()) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
-    if (soundfx)
-      play_sample(place, 255, 122, 1000, 0);
+    if (soundfx) {
+      asw::sound::play(place, 255, 122, 0);
+    }
   }
 }
 
 // Performs main game actions
 void game() {
-  // Listen to mouse
-  m_listener.update();
-
   // Menu
   if (gameScreen == 1) {
     // Checks for mouse press
-    if (mouseListener::buttonPressed[1]) {
-      if (one_player.get_hover()) {
-        gameScreen = 2;
-        turn = 0;
-        setup(false);
-        aexlib::draw::animation::highcolor_fade_out(16);
-        draw(false);
-        aexlib::draw::animation::highcolor_fade_in(buffer, 16);
-      } else if (two_player.get_hover()) {
-        gameScreen = 3;
-        turn = 0;
-        setup(false);
-        aexlib::draw::animation::highcolor_fade_out(16);
-        draw(false);
-        aexlib::draw::animation::highcolor_fade_in(buffer, 16);
-      } else if (difficulty_b.get_hover() == true) {
-        if (difficulty == 2)
-          difficulty_b.set_images("images/buttons/easy.png",
-                                  "images/buttons/easy_hover.png");
-        else if (difficulty == 0)
-          difficulty_b.set_images("images/buttons/medium.png",
-                                  "images/buttons/medium_hover.png");
-        else if (difficulty == 1)
-          difficulty_b.set_images("images/buttons/hard.png",
-                                  "images/buttons/hard_hover.png");
-        difficulty = (difficulty + 1) % 3;
-      } else if (sound.get_hover() == true) {
-        if (soundfx == true) {
-          soundfx = false;
-          sound.set_images("images/buttons/sound_off.png",
-                           "images/buttons/sound_off_hover.png");
-        } else if (soundfx == false) {
-          soundfx = true;
-          sound.set_images("images/buttons/sound_on.png",
-                           "images/buttons/sound_on_hover.png");
-        }
-      } else if (quit.get_hover() == true) {
-        gameRunning = false;
+    if (one_player.is_clicked()) {
+      gameScreen = 2;
+      turn = 0;
+      setup(false);
+    } else if (two_player.is_clicked()) {
+      gameScreen = 3;
+      turn = 0;
+      setup(false);
+    } else if (difficulty_b.is_clicked()) {
+      if (difficulty == 2) {
+        difficulty_b.set_images("assets/images/buttons/easy.png",
+                                "assets/images/buttons/easy_hover.png");
+      } else if (difficulty == 0) {
+        difficulty_b.set_images("assets/images/buttons/medium.png",
+                                "assets/images/buttons/medium_hover.png");
+      } else if (difficulty == 1) {
+        difficulty_b.set_images("assets/images/buttons/hard.png",
+                                "assets/images/buttons/hard_hover.png");
       }
+      difficulty = (difficulty + 1) % 3;
+    } else if (sound.is_clicked()) {
+      if (soundfx) {
+        soundfx = false;
+        sound.set_images("assets/images/buttons/sound_off.png",
+                         "assets/images/buttons/sound_off_hover.png");
+      } else if (!soundfx) {
+        soundfx = true;
+        sound.set_images("assets/images/buttons/sound_on.png",
+                         "assets/images/buttons/sound_on_hover.png");
+      }
+    } else if (quit.is_clicked()) {
+      asw::core::exit = true;
     }
   }
 
   // One player and 2 player
   else if (gameScreen == 2 || gameScreen == 3) {
     // Chooses which tile is selected based on mouse position
-    x = mouse_x / 100;
-    y = mouse_y / 100;
+    x = asw::input::mouse.x / 100;
+    y = asw::input::mouse.y / 100;
 
     // Check and perform x winning action
     if (gridarray[0][0] == 1 && gridarray[0][1] == 1 && gridarray[0][2] == 1 ||
@@ -337,37 +308,53 @@ void game() {
         gridarray[0][2] == 1 && gridarray[1][2] == 1 && gridarray[2][2] == 1 ||
         gridarray[0][0] == 1 && gridarray[1][1] == 1 && gridarray[2][2] == 1 ||
         gridarray[2][0] == 1 && gridarray[1][1] == 1 && gridarray[0][2] == 1) {
-      if (gridarray[0][0] == 1 && gridarray[0][1] == 1 && gridarray[0][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 50, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[1][0] == 1 && gridarray[1][1] == 1 && gridarray[1][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 150, 50, 150, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[2][0] == 1 && gridarray[2][1] == 1 && gridarray[2][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 250, 50, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][0] == 1 && gridarray[1][0] == 1 && gridarray[2][0] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 250, 50, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][1] == 1 && gridarray[1][1] == 1 && gridarray[2][1] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 50, 150, 250, 150, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][2] == 1 && gridarray[1][2] == 1 && gridarray[2][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 50, 250, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][0] == 1 && gridarray[1][1] == 1 && gridarray[2][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[2][0] == 1 && gridarray[1][1] == 1 && gridarray[0][2] == 1)
-        aexlib::draw::primitive::thick_line(buffer, 250, 50, 50, 250, 10,
-                                            makecol(255, 0, 0));
+      if (gridarray[0][0] == 1 && gridarray[0][1] == 1 &&
+          gridarray[0][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(50, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[1][0] == 1 && gridarray[1][1] == 1 &&
+          gridarray[1][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(150, 50), asw::Vec2<float>(150, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[2][0] == 1 && gridarray[2][1] == 1 &&
+          gridarray[2][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][0] == 1 && gridarray[1][0] == 1 &&
+          gridarray[2][0] == 1) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 50),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][1] == 1 && gridarray[1][1] == 1 &&
+          gridarray[2][1] == 1) {
+        asw::draw::line(asw::Vec2<float>(50, 150), asw::Vec2<float>(250, 150),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][2] == 1 && gridarray[1][2] == 1 &&
+          gridarray[2][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(50, 250), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][0] == 1 && gridarray[1][1] == 1 &&
+          gridarray[2][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[2][0] == 1 && gridarray[1][1] == 1 &&
+          gridarray[0][2] == 1) {
+        asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(50, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
 
-      if (soundfx)
-        play_sample(win, 255, 122, 1000, 0);
+      if (soundfx) {
+        asw::sound::play(win, 255, 122, 0);
+      }
 
-      draw_trans_sprite(buffer, xwin, 0, 0);
-      draw_sprite(screen, buffer, 0, 0);
-      rest(2000);
+      asw::draw::sprite(xwin, asw::Vec2<float>(0, 0));
+      // rest(2000);
       turn = 0;
       setup(false);
     }
@@ -389,36 +376,52 @@ void game() {
                  gridarray[2][2] == 2 ||
              gridarray[2][0] == 2 && gridarray[1][1] == 2 &&
                  gridarray[0][2] == 2) {
-      if (gridarray[0][0] == 2 && gridarray[0][1] == 2 && gridarray[0][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 50, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[1][0] == 2 && gridarray[1][1] == 2 && gridarray[1][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 150, 50, 150, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[2][0] == 2 && gridarray[2][1] == 2 && gridarray[2][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 250, 50, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][0] == 2 && gridarray[1][0] == 2 && gridarray[2][0] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 250, 50, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][1] == 2 && gridarray[1][1] == 2 && gridarray[2][1] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 50, 150, 250, 150, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][2] == 2 && gridarray[1][2] == 2 && gridarray[2][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 50, 250, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[0][0] == 2 && gridarray[1][1] == 2 && gridarray[2][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 50, 50, 250, 250, 10,
-                                            makecol(255, 0, 0));
-      if (gridarray[2][0] == 2 && gridarray[1][1] == 2 && gridarray[0][2] == 2)
-        aexlib::draw::primitive::thick_line(buffer, 250, 50, 50, 250, 10,
-                                            makecol(255, 0, 0));
+      if (gridarray[0][0] == 2 && gridarray[0][1] == 2 &&
+          gridarray[0][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(50, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[1][0] == 2 && gridarray[1][1] == 2 &&
+          gridarray[1][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(150, 50), asw::Vec2<float>(150, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[2][0] == 2 && gridarray[2][1] == 2 &&
+          gridarray[2][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][0] == 2 && gridarray[1][0] == 2 &&
+          gridarray[2][0] == 2) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 50),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][1] == 2 && gridarray[1][1] == 2 &&
+          gridarray[2][1] == 2) {
+        asw::draw::line(asw::Vec2<float>(50, 150), asw::Vec2<float>(250, 150),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][2] == 2 && gridarray[1][2] == 2 &&
+          gridarray[2][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(50, 250), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[0][0] == 2 && gridarray[1][1] == 2 &&
+          gridarray[2][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
+      if (gridarray[2][0] == 2 && gridarray[1][1] == 2 &&
+          gridarray[0][2] == 2) {
+        asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(50, 250),
+                        asw::util::makeColor(255, 0, 0));
+      }
 
-      if (soundfx)
-        play_sample(lose, 255, 122, 1000, 0);
-      draw_trans_sprite(buffer, owin, 0, 0);
-      draw_sprite(screen, buffer, 0, 0);
-      rest(2000);
+      if (soundfx) {
+        asw::sound::play(lose, 255, 122, 0);
+      }
+      asw::draw::sprite(owin, asw::Vec2<float>(0, 0));
+      // rest(2000);
       turn = 1;
       setup(false);
     }
@@ -429,101 +432,91 @@ void game() {
              gridarray[1][1] != 0 && gridarray[2][1] != 0 &&
              gridarray[0][2] != 0 && gridarray[1][2] != 0 &&
              gridarray[2][2] != 0) {
-      if (soundfx)
-        play_sample(cat, 255, 122, 1000, 0);
-      draw_trans_sprite(buffer, catsgame, 0, 0);
-      draw_sprite(screen, buffer, 0, 0);
-      rest(2000);
+      if (soundfx) {
+        asw::sound::play(cat, 255, 122, 0);
+      }
+      asw::draw::sprite(catsgame, asw::Vec2<float>(0, 0));
+      // rest(2000);
       turn = 1;
       setup(false);
     }
 
     // Runs game function
-    if (gameScreen == 2)
+    if (gameScreen == 2) {
       gameOne();
-    else if (gameScreen == 3)
+    } else if (gameScreen == 3) {
       gameTwo();
+    }
 
     // Change selector sprite
-    if (key[KEY_S]) {
+    if (asw::input::wasKeyPressed(asw::input::Key::S)) {
       selector = (selector + 1) % 4;
-      rest(200);
     }
 
     // Checks for mouse press
-    if (mouseListener::buttonPressed[1]) {
-      if (menu.get_hover() == true) {
-        gameScreen = 1;
-        aexlib::draw::animation::highcolor_fade_out(16);
-        draw(false);
-        aexlib::draw::animation::highcolor_fade_in(buffer, 16);
-      }
+    if (menu.is_clicked()) {
+      gameScreen = 1;
     }
   }
 }
 
 // Draw loop
-void draw(bool to_screen) {
-  // Allow transparency
-  set_alpha_blender();
-
+void draw() {
   // Menu
   if (gameScreen == 1) {
     // Draws grid
-    draw_sprite(buffer, grid, 0, 0);
+    asw::draw::sprite(grid, asw::Vec2<float>(0, 0));
 
     // Draws tiles on board
     for (int i = 0; i < 4; i++) {
       for (int t = 0; t < 4; t++) {
-        if (gridarray[i][t] == 0)
-          draw_sprite(buffer, blank, (i)*100, (t)*100);
-        else if (gridarray[i][t] == 1)
-          draw_sprite(buffer, img_x, (i)*100, (t)*100);
-        else if (gridarray[i][t] == 2)
-          draw_sprite(buffer, img_o, (i)*100, (t)*100);
+        if (gridarray[i][t] == 0) {
+          asw::draw::sprite(blank, asw::Vec2<float>(i * 100, t * 100));
+        } else if (gridarray[i][t] == 1) {
+          asw::draw::sprite(img_x, asw::Vec2<float>(i * 100, t * 100));
+        } else if (gridarray[i][t] == 2) {
+          asw::draw::sprite(img_o, asw::Vec2<float>(i * 100, t * 100));
+        }
       }
     }
 
     // Draws menu
-    draw_trans_sprite(buffer, main_menu, 0, 0);
+    asw::draw::sprite(main_menu, asw::Vec2<float>(0, 0));
 
     // Draws Buttons
-    one_player.draw(buffer);
-    two_player.draw(buffer);
-    quit.draw(buffer);
-    sound.draw(buffer);
-    difficulty_b.draw(buffer);
+    one_player.draw();
+    two_player.draw();
+    quit.draw();
+    sound.draw();
+    difficulty_b.draw();
   }
   // One player and 2 player
   else if (gameScreen == 2 || gameScreen == 3) {
     // Draws grid
-    draw_sprite(buffer, grid, 0, 0);
+    asw::draw::sprite(grid, asw::Vec2<float>(0, 0));
 
     // Draws tiles on board
     for (int i = 0; i < 4; i++) {
       for (int t = 0; t < 4; t++) {
-        if (gridarray[i][t] == 0)
-          draw_sprite(buffer, blank, i * 100, t * 100);
-        else if (gridarray[i][t] == 1)
-          draw_sprite(buffer, img_x, i * 100, t * 100);
-        else if (gridarray[i][t] == 2)
-          draw_sprite(buffer, img_o, i * 100, t * 100);
+        if (gridarray[i][t] == 0) {
+          asw::draw::sprite(blank, asw::Vec2<float>(i * 100, t * 100));
+        } else if (gridarray[i][t] == 1) {
+          asw::draw::sprite(img_x, asw::Vec2<float>(i * 100, t * 100));
+        } else if (gridarray[i][t] == 2) {
+          asw::draw::sprite(img_o, asw::Vec2<float>(i * 100, t * 100));
+        }
       }
     }
 
     // Draws selection tile
-    draw_sprite(buffer, selected[selector], x * 100, y * 100);
+    asw::draw::sprite(selected[selector], asw::Vec2<float>(x * 100, y * 100));
 
     // Draws Menu Button
-    menu.draw(buffer);
+    menu.draw();
   }
 
-  // Draws mouse cursor
-  draw_sprite(buffer, cursor[(turn + 1) * (gameScreen != 1)], mouse_x, mouse_y);
-
-  // Draws buffer
-  if (to_screen)
-    draw_sprite(screen, buffer, 0, 0);
+  asw::draw::sprite(cursor[(turn + 1) * (gameScreen != 1)],
+                    asw::Vec2<float>(asw::input::mouse.x, asw::input::mouse.y));
 }
 
 // Program starts here
@@ -532,32 +525,15 @@ int main() {
   setup(true);
 
   // Run game loop while game running
-  while (!key[KEY_ESC] && gameRunning) {
+  while (!asw::core::exit) {
+    asw::core::update();
     game();
-    draw(true);
+
+    asw::draw::clearColor(asw::util::makeColor(0, 0, 0));
+    draw();
+    asw::display::present();
   }
-
-  // Destroy images
-  destroy_bitmap(buffer);
-  destroy_bitmap(grid);
-  destroy_bitmap(img_x);
-  destroy_bitmap(img_o);
-  destroy_bitmap(blank);
-  destroy_bitmap(selected[0]);
-  destroy_bitmap(selected[1]);
-  destroy_bitmap(selected[2]);
-  destroy_bitmap(selected[3]);
-  destroy_bitmap(xwin);
-  destroy_bitmap(owin);
-  destroy_bitmap(catsgame);
-
-  // Destroy sounds
-  destroy_sample(win);
-  destroy_sample(lose);
-  destroy_sample(cat);
-  destroy_sample(place);
 
   // End
   return 0;
 }
-END_OF_MAIN()

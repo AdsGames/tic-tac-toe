@@ -4,38 +4,30 @@
  * 31/12/2016
  * Redone to be more intuitive
  */
-#ifndef BUTTON_H
-#define BUTTON_H
+#pragma once
 
-#include <allegro.h>
-#include <string>
+#include <asw/asw.h>
+#include <array>
 
-class Button{
-  public:
-    Button();
-    ~Button();
+class Button {
+ public:
+  Button();
 
-    void set_images(std::string image1, std::string image2);
+  void set_images(const std::string& image1, const std::string& image2);
 
-    bool get_hover();
+  bool get_hover() const;
 
-    void draw(BITMAP* tempBitmap);
+  bool is_clicked() const;
 
-    void set_position(int newX, int newY);
+  void draw() const;
 
-    void set_type(int newType);
-    void set_value(int newValue);
+  void set_position(int newX, int newY);
 
-    int get_x();
-    int get_y();
-  private:
-    int button_height;
-    int button_width;
+  int get_x() const;
+  int get_y() const;
 
-    int x;
-    int y;
+ private:
+  asw::Quad<float> transform;
 
-    BITMAP *images[2];
+  std::array<asw::Texture, 2> images;
 };
-
-#endif

@@ -2,58 +2,24 @@
 
 Tic Tac Toe game with somewhat smart, but basic, AI.
 
-## Getting started
+[![Reliability Rating](https://sonarcloud.io/api/project_badges/measure?project=AdsGames_tic-tac-toe&metric=reliability_rating)](https://sonarcloud.io/summary/new_code?id=AdsGames_tic-tac-toe)
+[![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=AdsGames_tic-tac-toe&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=AdsGames_tic-tac-toe)
+[![Maintainability Rating](https://sonarcloud.io/api/project_badges/measure?project=AdsGames_tic-tac-toe&metric=sqale_rating)](https://sonarcloud.io/summary/new_code?id=AdsGames_tic-tac-toe)
 
-### Windows (MSYS2)
+## Demo
 
-#### Install Libraries
+[Web Demo](https://adsgames.github.io/tic-tac-toe/)
+
+### CMake
 
 ```bash
-https://www.allegro.cc/files/?v=4.4
+cmake -B build .
+cmake --build ./build
 ```
 
-#### Build
+### Build Emscripten
 
 ```bash
-cmake -G "MSYS Makefiles" .
-```
-
-```bash
-make
-```
-
-### Mac OS
-
-#### Install Libraries
-
-```bash
-https://github.com/msikma/liballeg.4.4.2-osx
-```
-
-#### Build
-
-```bash
-cmake -G "Unix Makefiles" .
-```
-
-```bash
-make
-```
-
-### Linux
-
-#### Install Libraries
-
-```bash
-sudo apt-get install liballegro4-dev libloadpng4-dev
-```
-
-#### Build
-
-```bash
-cmake -G "Unix Makefiles" .
-```
-
-```bash
-make
+emcmake cmake -B build .
+cmake --build ./build
 ```
