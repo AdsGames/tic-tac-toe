@@ -2,10 +2,13 @@
 
 #include <asw/asw.h>
 #include <array>
+#include <utility>
 
 #include "../button.h"
 #include "../globals.h"
 #include "./state.h"
+
+using Coordinate = std::pair<int, int>;
 
 class Game : public asw::scene::Scene<States> {
  public:
@@ -26,6 +29,15 @@ class Game : public asw::scene::Scene<States> {
 
   // Performs unique two player actions
   void gameTwo();
+
+  // Check win for player
+  bool isWin(int player);
+
+  // Check win coordinates for player
+  std::pair<asw::Vec2<int>, asw::Vec2<int>> winCoordinates(int player);
+
+  // Check cats game
+  bool isCatsGame();
 
   // Creates images
   asw::Texture grid;
@@ -59,4 +71,8 @@ class Game : public asw::scene::Scene<States> {
       {0, 0, 0},
       {0, 0, 0},
   }};
+
+  // End Game Timer
+  float end_game_timer;
+  bool has_won;
 };

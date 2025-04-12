@@ -19,10 +19,8 @@ class Menu : public asw::scene::Scene<States> {
                           "assets/images/buttons/two_player_hover.png");
     quit.set_images("assets/images/buttons/quit.png",
                     "assets/images/buttons/quit_hover.png");
-    sound.set_images("assets/images/buttons/sound_on.png",
-                     "assets/images/buttons/sound_on_hover.png");
-    difficulty_b.set_images("assets/images/buttons/medium.png",
-                            "assets/images/buttons/medium_hover.png");
+    set_sound_images();
+    set_difficulty_images();
 
     // Load sprites
     grid = asw::assets::loadTexture("assets/images/grid.png");
@@ -46,27 +44,10 @@ class Menu : public asw::scene::Scene<States> {
       sceneManager.setNextScene(States::Game);
     } else if (difficulty_b.is_clicked()) {
       Game::difficulty = (Game::difficulty + 1) % 3;
-
-      if (Game::difficulty == 0) {
-        difficulty_b.set_images("assets/images/buttons/easy.png",
-                                "assets/images/buttons/easy_hover.png");
-      } else if (Game::difficulty == 1) {
-        difficulty_b.set_images("assets/images/buttons/medium.png",
-                                "assets/images/buttons/medium_hover.png");
-      } else if (Game::difficulty == 2) {
-        difficulty_b.set_images("assets/images/buttons/hard.png",
-                                "assets/images/buttons/hard_hover.png");
-      }
-
+      set_difficulty_images();
     } else if (sound.is_clicked()) {
       soundfx = !soundfx;
-      if (soundfx) {
-        sound.set_images("assets/images/buttons/sound_on.png",
-                         "assets/images/buttons/sound_on_hover.png");
-      } else {
-        sound.set_images("assets/images/buttons/sound_off.png",
-                         "assets/images/buttons/sound_off_hover.png");
-      }
+      set_sound_images();
     } else if (quit.is_clicked()) {
       asw::core::exit = true;
     }
@@ -88,6 +69,29 @@ class Menu : public asw::scene::Scene<States> {
   }
 
  private:
+  void set_difficulty_images() {
+    if (Game::difficulty == 0) {
+      difficulty_b.set_images("assets/images/buttons/easy.png",
+                              "assets/images/buttons/easy_hover.png");
+    } else if (Game::difficulty == 1) {
+      difficulty_b.set_images("assets/images/buttons/medium.png",
+                              "assets/images/buttons/medium_hover.png");
+    } else if (Game::difficulty == 2) {
+      difficulty_b.set_images("assets/images/buttons/hard.png",
+                              "assets/images/buttons/hard_hover.png");
+    }
+  }
+
+  void set_sound_images() {
+    if (soundfx) {
+      sound.set_images("assets/images/buttons/sound_on.png",
+                       "assets/images/buttons/sound_on_hover.png");
+    } else {
+      sound.set_images("assets/images/buttons/sound_off.png",
+                       "assets/images/buttons/sound_off_hover.png");
+    }
+  }
+
   Button one_player;
   Button two_player;
   Button quit;

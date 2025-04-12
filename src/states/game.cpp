@@ -19,6 +19,8 @@ void Game::init() {
   // Init variables
   turn = 0;
   selector = 0;
+  end_game_timer = 0;
+  has_won = false;
 
   // Assigns bitmaps
   grid = asw::assets::loadTexture("assets/images/grid.png");
@@ -159,6 +161,7 @@ void Game::gameOne() {
         move_made = true;
       }
     }
+
     if (soundfx) {
       asw::sound::play(place, 255, 122, 0);
     }
@@ -182,142 +185,111 @@ void Game::gameTwo() {
   }
 }
 
+// Check win for player
+std::pair<asw::Vec2<int>, asw::Vec2<int>> Game::winCoordinates(int player) {
+  // Check for win
+
+  // Check across
+  for (int i = 0; i < 3; i++) {
+    if (gridarray[i][0] == player && gridarray[i][1] == player &&
+        gridarray[i][2] == player) {
+      return {{i, 0}, {i, 2}};
+    }
+  }
+
+  // Check down
+  for (int i = 0; i < 3; i++) {
+    if (gridarray[0][i] == player && gridarray[1][i] == player &&
+        gridarray[2][i] == player) {
+      return {{0, i}, {2, i}};
+    }
+  }
+
+  // Check diagonal top left to bottom right
+  if (gridarray[0][0] == player && gridarray[1][1] == player &&
+      gridarray[2][2] == player) {
+    return {{0, 0}, {2, 2}};
+  }
+
+  // Check diagonal top right to bottom left
+  if (gridarray[2][0] == player && gridarray[1][1] == player &&
+      gridarray[0][2] == player) {
+    return {{2, 0}, {0, 2}};
+  }
+
+  // No win
+  return {{-1, -1}, {-1, -1}};
+}
+
+// Check win for player
+bool Game::isWin(int player) {
+  auto coords = winCoordinates(player);
+  return coords.first.x != -1;
+}
+
+// Check cats game
+bool Game::isCatsGame() {
+  // Check if all tiles are filled
+  for (int i = 0; i < 3; i++) {
+    for (int j = 0; j < 3; j++) {
+      if (gridarray[i][j] == 0) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
 void Game::update(float dt) {
   // Chooses which tile is selected based on mouse position
   x = asw::input::mouse.x / 100;
   y = asw::input::mouse.y / 100;
 
+  if (has_won) {
+    end_game_timer += dt;
+  }
+
   // Check and perform x winning action
-  if ((gridarray[0][0] == 1 && gridarray[0][1] == 1 && gridarray[0][2] == 1) ||
-      (gridarray[1][0] == 1 && gridarray[1][1] == 1 && gridarray[1][2] == 1) ||
-      (gridarray[2][0] == 1 && gridarray[2][1] == 1 && gridarray[2][2] == 1) ||
-      (gridarray[0][0] == 1 && gridarray[1][0] == 1 && gridarray[2][0] == 1) ||
-      (gridarray[0][1] == 1 && gridarray[1][1] == 1 && gridarray[2][1] == 1) ||
-      (gridarray[0][2] == 1 && gridarray[1][2] == 1 && gridarray[2][2] == 1) ||
-      (gridarray[0][0] == 1 && gridarray[1][1] == 1 && gridarray[2][2] == 1) ||
-      (gridarray[2][0] == 1 && gridarray[1][1] == 1 && gridarray[0][2] == 1)) {
-    if (gridarray[0][0] == 1 && gridarray[0][1] == 1 && gridarray[0][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(50, 250),
-                      asw::util::makeColor(255, 0, 0));
+  if (isWin(1)) {
+    if (!has_won) {
+      if (soundfx) {
+        asw::sound::play(win, 255, 122, 0);
+      }
+      has_won = true;
     }
-    if (gridarray[1][0] == 1 && gridarray[1][1] == 1 && gridarray[1][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(150, 50), asw::Vec2<float>(150, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[2][0] == 1 && gridarray[2][1] == 1 && gridarray[2][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][0] == 1 && gridarray[1][0] == 1 && gridarray[2][0] == 1) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 50),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][1] == 1 && gridarray[1][1] == 1 && gridarray[2][1] == 1) {
-      asw::draw::line(asw::Vec2<float>(50, 150), asw::Vec2<float>(250, 150),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][2] == 1 && gridarray[1][2] == 1 && gridarray[2][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(50, 250), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][0] == 1 && gridarray[1][1] == 1 && gridarray[2][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[2][0] == 1 && gridarray[1][1] == 1 && gridarray[0][2] == 1) {
-      asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(50, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-
-    if (soundfx) {
-      asw::sound::play(win, 255, 122, 0);
-    }
-
-    asw::draw::sprite(xwin, asw::Vec2<float>(0, 0));
-    // rest(2000);
-    turn = 0;
-    init();
   }
 
   // Check and perform o winning action
-  else if ((gridarray[0][0] == 2 && gridarray[0][1] == 2 &&
-            gridarray[0][2] == 2) ||
-           (gridarray[1][0] == 2 && gridarray[1][1] == 2 &&
-            gridarray[1][2] == 2) ||
-           (gridarray[2][0] == 2 && gridarray[2][1] == 2 &&
-            gridarray[2][2] == 2) ||
-           (gridarray[0][0] == 2 && gridarray[1][0] == 2 &&
-            gridarray[2][0] == 2) ||
-           (gridarray[0][1] == 2 && gridarray[1][1] == 2 &&
-            gridarray[2][1] == 2) ||
-           (gridarray[0][2] == 2 && gridarray[1][2] == 2 &&
-            gridarray[2][2] == 2) ||
-           (gridarray[0][0] == 2 && gridarray[1][1] == 2 &&
-            gridarray[2][2] == 2) ||
-           (gridarray[2][0] == 2 && gridarray[1][1] == 2 &&
-            gridarray[0][2] == 2)) {
-    if (gridarray[0][0] == 2 && gridarray[0][1] == 2 && gridarray[0][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(50, 250),
-                      asw::util::makeColor(255, 0, 0));
+  else if (isWin(2)) {
+    if (!has_won) {
+      if (soundfx) {
+        asw::sound::play(lose, 255, 122, 0);
+      }
+      has_won = true;
     }
-    if (gridarray[1][0] == 2 && gridarray[1][1] == 2 && gridarray[1][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(150, 50), asw::Vec2<float>(150, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[2][0] == 2 && gridarray[2][1] == 2 && gridarray[2][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][0] == 2 && gridarray[1][0] == 2 && gridarray[2][0] == 2) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 50),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][1] == 2 && gridarray[1][1] == 2 && gridarray[2][1] == 2) {
-      asw::draw::line(asw::Vec2<float>(50, 150), asw::Vec2<float>(250, 150),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][2] == 2 && gridarray[1][2] == 2 && gridarray[2][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(50, 250), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[0][0] == 2 && gridarray[1][1] == 2 && gridarray[2][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(50, 50), asw::Vec2<float>(250, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-    if (gridarray[2][0] == 2 && gridarray[1][1] == 2 && gridarray[0][2] == 2) {
-      asw::draw::line(asw::Vec2<float>(250, 50), asw::Vec2<float>(50, 250),
-                      asw::util::makeColor(255, 0, 0));
-    }
-
-    if (soundfx) {
-      asw::sound::play(lose, 255, 122, 0);
-    }
-    asw::draw::sprite(owin, asw::Vec2<float>(0, 0));
-    // rest(2000);
-    turn = 1;
-    init();
   }
 
   // Check and perform cats game action
-  else if (gridarray[0][0] != 0 && gridarray[1][0] != 0 &&
-           gridarray[2][0] != 0 && gridarray[0][1] != 0 &&
-           gridarray[1][1] != 0 && gridarray[2][1] != 0 &&
-           gridarray[0][2] != 0 && gridarray[1][2] != 0 &&
-           gridarray[2][2] != 0) {
-    if (soundfx) {
-      asw::sound::play(cat, 255, 122, 0);
+  else if (isCatsGame()) {
+    if (!has_won) {
+      if (soundfx) {
+        asw::sound::play(cat, 255, 122, 0);
+      }
+      has_won = true;
     }
-    asw::draw::sprite(catsgame, asw::Vec2<float>(0, 0));
-    // rest(2000);
-    turn = 1;
+  }
+
+  if (end_game_timer > 2000) {
     init();
   }
 
   // Runs game function
-  if (Game::players == 1) {
-    gameOne();
-  } else {
-    gameTwo();
+  if (!has_won) {
+    if (Game::players == 1) {
+      gameOne();
+    } else {
+      gameTwo();
+    }
   }
 
   // Change selector sprite
@@ -348,6 +320,36 @@ void Game::draw() {
 
   // Draws selection tile
   asw::draw::sprite(selected[selector], asw::Vec2<float>(x * 100, y * 100));
+
+  // Check and perform x winning action
+  if (isWin(1)) {
+    const auto coords = winCoordinates(1);
+    const auto first = coords.first * 100;
+    const auto second = coords.second * 100;
+
+    asw::draw::line(asw::Vec2<float>(first.x + 50, first.y + 50),
+                    asw::Vec2<float>(second.x + 50, second.y + 50),
+                    asw::util::makeColor(255, 0, 0));
+
+    asw::draw::sprite(xwin, asw::Vec2<float>(0, 0));
+  }
+
+  // Check and perform o winning action
+  else if (isWin(2)) {
+    const auto coords = winCoordinates(2);
+    const auto first = coords.first * 100;
+    const auto second = coords.second * 100;
+
+    asw::draw::line(asw::Vec2<float>(first.x + 50, first.y + 50),
+                    asw::Vec2<float>(second.x + 50, second.y + 50),
+                    asw::util::makeColor(255, 0, 0));
+
+    asw::draw::sprite(owin, asw::Vec2<float>(0, 0));
+  }
+  // Check and perform cats game action
+  else if (isCatsGame()) {
+    asw::draw::sprite(catsgame, asw::Vec2<float>(0, 0));
+  }
 
   // Draws Menu Button
   menu.draw();

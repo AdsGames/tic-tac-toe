@@ -1,3 +1,3 @@
 #include "globals.h"
 
-bool soundfx = false;
+bool soundfx = true;
