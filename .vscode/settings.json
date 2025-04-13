@@ -98,5 +98,9 @@
     "text_encoding": "cpp",
     "typeindex": "cpp"
   },
-  "sonarlint.pathToCompileCommands": "${workspaceFolder}\\compile_commands.json"
+  "sonarlint.pathToCompileCommands": "${workspaceFolder}/build/debug/compile_commands.json",
+  "sonarlint.connectedMode.project": {
+    "connectionId": "adsgames",
+    "projectKey": "AdsGames_tic-tac-toe"
+  }
 }
