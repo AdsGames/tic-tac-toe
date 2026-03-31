@@ -1,25 +1,26 @@
 #include "button.h"
 
 Button::Button() {
-  transform.setPosition(0, 0);
-  transform.setSize(10, 10);
+  transform.set_position(0, 0);
+  transform.set_size(10, 10);
 }
 
 void Button::set_images(const std::string& image1, const std::string& image2) {
   // Set new images
-  images[0] = asw::assets::loadTexture(image1);
-  images[1] = asw::assets::loadTexture(image2);
+  images[0] = asw::assets::load_texture(image1);
+  images[1] = asw::assets::load_texture(image2);
 
-  transform.size = asw::util::getTextureSize(images[0]);
+  transform.size = asw::util::get_texture_size(images[0]);
 }
 
 bool Button::get_hover() const {
-  return transform.contains(asw::input::mouse.x, asw::input::mouse.y);
+  const auto& mouse = asw::input::get_mouse();
+  return transform.contains(mouse.position.x, mouse.position.y);
 }
 
 bool Button::is_clicked() const {
   return get_hover() &&
-         asw::input::wasButtonPressed(asw::input::MouseButton::LEFT);
+         asw::input::get_mouse_button_down(asw::input::MouseButton::Left);
 }
 
 void Button::set_position(int x, int y) {

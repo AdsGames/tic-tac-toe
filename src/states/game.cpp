@@ -23,27 +23,27 @@ void Game::init() {
   has_won = false;
 
   // Assigns bitmaps
-  grid = asw::assets::loadTexture("assets/images/grid.png");
-  img_x = asw::assets::loadTexture("assets/images/x.png");
-  img_o = asw::assets::loadTexture("assets/images/o.png");
-  xwin = asw::assets::loadTexture("assets/images/xwin.png");
-  owin = asw::assets::loadTexture("assets/images/owin.png");
-  catsgame = asw::assets::loadTexture("assets/images/catsgame.png");
+  grid = asw::assets::load_texture("assets/images/grid.png");
+  img_x = asw::assets::load_texture("assets/images/x.png");
+  img_o = asw::assets::load_texture("assets/images/o.png");
+  xwin = asw::assets::load_texture("assets/images/xwin.png");
+  owin = asw::assets::load_texture("assets/images/owin.png");
+  catsgame = asw::assets::load_texture("assets/images/catsgame.png");
 
-  cursor[0] = asw::assets::loadTexture("assets/images/cursor.png");
-  cursor[1] = asw::assets::loadTexture("assets/images/cursor_x.png");
-  cursor[2] = asw::assets::loadTexture("assets/images/cursor_o.png");
+  cursor[0] = asw::assets::load_texture("assets/images/cursor.png");
+  cursor[1] = asw::assets::load_texture("assets/images/cursor_x.png");
+  cursor[2] = asw::assets::load_texture("assets/images/cursor_o.png");
 
-  selected[0] = asw::assets::loadTexture("assets/images/selected.png");
-  selected[1] = asw::assets::loadTexture("assets/images/selected2.png");
-  selected[2] = asw::assets::loadTexture("assets/images/selected3.png");
-  selected[3] = asw::assets::loadTexture("assets/images/selected4.png");
+  selected[0] = asw::assets::load_texture("assets/images/selected.png");
+  selected[1] = asw::assets::load_texture("assets/images/selected2.png");
+  selected[2] = asw::assets::load_texture("assets/images/selected3.png");
+  selected[3] = asw::assets::load_texture("assets/images/selected4.png");
 
   // Assigns Sounds
-  win = asw::assets::loadSample("assets/sfx/win.wav");
-  lose = asw::assets::loadSample("assets/sfx/lose.wav");
-  cat = asw::assets::loadSample("assets/sfx/catsgame.wav");
-  place = asw::assets::loadSample("assets/sfx/place.wav");
+  win = asw::assets::load_sample("assets/sfx/win.wav");
+  lose = asw::assets::load_sample("assets/sfx/lose.wav");
+  cat = asw::assets::load_sample("assets/sfx/catsgame.wav");
+  place = asw::assets::load_sample("assets/sfx/place.wav");
 
   // Sets button positions
   menu.set_images("assets/images/buttons/menu.png",
@@ -55,11 +55,11 @@ void Game::init() {
 void Game::gameOne() {
   // Places x or o respectively
   if (turn == 0) {
-    if (asw::input::wasButtonPressed(asw::input::MouseButton::LEFT) &&
+    if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
         gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
       if (soundfx) {
-        asw::sound::play(place, 255, 122, 0);
+        asw::sound::play(place);
       }
       turn = 1;
     }
@@ -163,7 +163,7 @@ void Game::gameOne() {
     }
 
     if (soundfx) {
-      asw::sound::play(place, 255, 122, 0);
+      asw::sound::play(place);
     }
 
     if (move_made) {
@@ -175,18 +175,18 @@ void Game::gameOne() {
 // Performs unique two player actions
 void Game::gameTwo() {
   // Places x or o respectively
-  if (asw::input::wasButtonPressed(asw::input::MouseButton::LEFT) &&
+  if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
       gridarray[x][y] == 0 && !menu.get_hover()) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
     if (soundfx) {
-      asw::sound::play(place, 255, 122, 0);
+      asw::sound::play(place);
     }
   }
 }
 
 // Check win for player
-std::pair<asw::Vec2<int>, asw::Vec2<int>> Game::winCoordinates(int player) {
+std::pair<asw::Vec2i, asw::Vec2i> Game::winCoordinates(int player) {
   // Check for win
 
   // Check across
@@ -241,9 +241,11 @@ bool Game::isCatsGame() {
 }
 
 void Game::update(float dt) {
+  const auto& mouse = asw::input::get_mouse();
+
   // Chooses which tile is selected based on mouse position
-  x = asw::input::mouse.x / 100;
-  y = asw::input::mouse.y / 100;
+  x = std::clamp(static_cast<int>(mouse.position.x) / 100, 0, 2);
+  y = std::clamp(static_cast<int>(mouse.position.y) / 100, 0, 2);
 
   if (has_won) {
     end_game_timer += dt;
@@ -253,7 +255,7 @@ void Game::update(float dt) {
   if (isWin(1)) {
     if (!has_won) {
       if (soundfx) {
-        asw::sound::play(win, 255, 122, 0);
+        asw::sound::play(win);
       }
       has_won = true;
     }
@@ -263,7 +265,7 @@ void Game::update(float dt) {
   else if (isWin(2)) {
     if (!has_won) {
       if (soundfx) {
-        asw::sound::play(lose, 255, 122, 0);
+        asw::sound::play(lose);
       }
       has_won = true;
     }
@@ -273,13 +275,13 @@ void Game::update(float dt) {
   else if (isCatsGame()) {
     if (!has_won) {
       if (soundfx) {
-        asw::sound::play(cat, 255, 122, 0);
+        asw::sound::play(cat);
       }
       has_won = true;
     }
   }
 
-  if (end_game_timer > 2000) {
+  if (end_game_timer > 2.0F) {
     init();
   }
 
@@ -293,33 +295,36 @@ void Game::update(float dt) {
   }
 
   // Change selector sprite
-  if (asw::input::wasKeyPressed(asw::input::Key::S)) {
+  if (asw::input::get_key_down(asw::input::Key::S)) {
     selector = (selector + 1) % 4;
   }
 
   // Checks for mouse press
   if (menu.is_clicked()) {
-    sceneManager.setNextScene(States::Menu);
+    manager.set_next_scene(States::Menu);
   }
 }
 
 void Game::draw() {
+  const auto& mouse = asw::input::get_mouse();
+
   // Draws grid
-  asw::draw::sprite(grid, asw::Vec2<float>(0, 0));
+  asw::draw::sprite(grid, asw::Vec2f(0, 0));
 
   // Draws tiles on board
-  for (int i = 0; i < 4; i++) {
-    for (int t = 0; t < 4; t++) {
-      if (gridarray[i][t] == 1) {
-        asw::draw::sprite(img_x, asw::Vec2<float>(i * 100, t * 100));
-      } else if (gridarray[i][t] == 2) {
-        asw::draw::sprite(img_o, asw::Vec2<float>(i * 100, t * 100));
+  for (int i = 0; i < 3; i++) {
+    for (int t = 0; t < 3; t++) {
+      const auto& pos = asw::Vec2f(i * 100, t * 100);
+      if (gridarray.at(i).at(t) == 1) {
+        asw::draw::sprite(img_x, pos);
+      } else if (gridarray.at(i).at(t) == 2) {
+        asw::draw::sprite(img_o, pos);
       }
     }
   }
 
   // Draws selection tile
-  asw::draw::sprite(selected[selector], asw::Vec2<float>(x * 100, y * 100));
+  asw::draw::sprite(selected.at(selector), asw::Vec2f(x * 100, y * 100));
 
   // Check and perform x winning action
   if (isWin(1)) {
@@ -327,11 +332,11 @@ void Game::draw() {
     const auto first = coords.first * 100;
     const auto second = coords.second * 100;
 
-    asw::draw::line(asw::Vec2<float>(first.x + 50, first.y + 50),
-                    asw::Vec2<float>(second.x + 50, second.y + 50),
-                    asw::util::makeColor(255, 0, 0));
+    asw::draw::line(asw::Vec2f(first.x + 50, first.y + 50),
+                    asw::Vec2f(second.x + 50, second.y + 50),
+                    asw::Color(255, 0, 0));
 
-    asw::draw::sprite(xwin, asw::Vec2<float>(0, 0));
+    asw::draw::sprite(xwin, asw::Vec2f(0, 0));
   }
 
   // Check and perform o winning action
@@ -340,26 +345,23 @@ void Game::draw() {
     const auto first = coords.first * 100;
     const auto second = coords.second * 100;
 
-    asw::draw::line(asw::Vec2<float>(first.x + 50, first.y + 50),
-                    asw::Vec2<float>(second.x + 50, second.y + 50),
-                    asw::util::makeColor(255, 0, 0));
+    asw::draw::line(asw::Vec2f(first.x + 50, first.y + 50),
+                    asw::Vec2f(second.x + 50, second.y + 50),
+                    asw::Color(255, 0, 0));
 
-    asw::draw::sprite(owin, asw::Vec2<float>(0, 0));
+    asw::draw::sprite(owin, asw::Vec2f(0, 0));
   }
   // Check and perform cats game action
   else if (isCatsGame()) {
-    asw::draw::sprite(catsgame, asw::Vec2<float>(0, 0));
+    asw::draw::sprite(catsgame, asw::Vec2f(0, 0));
   }
 
   // Draws Menu Button
   menu.draw();
 
   if (Game::players == 1) {
-    asw::draw::sprite(
-        cursor[1], asw::Vec2<float>(asw::input::mouse.x, asw::input::mouse.y));
+    asw::draw::sprite(cursor.at(1), mouse.position);
   } else {
-    asw::draw::sprite(
-        cursor[(turn + 1)],
-        asw::Vec2<float>(asw::input::mouse.x, asw::input::mouse.y));
+    asw::draw::sprite(cursor.at(turn + 1), mouse.position);
   }
 }

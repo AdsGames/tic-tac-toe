@@ -1,6 +1,7 @@
 #pragma once
 
 #include <asw/asw.h>
+#include <algorithm>
 #include <array>
 #include <utility>
 
@@ -34,7 +35,7 @@ class Game : public asw::scene::Scene<States> {
   bool isWin(int player);
 
   // Check win coordinates for player
-  std::pair<asw::Vec2<int>, asw::Vec2<int>> winCoordinates(int player);
+  std::pair<asw::Vec2i, asw::Vec2i> winCoordinates(int player);
 
   // Check cats game
   bool isCatsGame();

@@ -23,8 +23,9 @@ class Menu : public asw::scene::Scene<States> {
     set_difficulty_images();
 
     // Load sprites
-    grid = asw::assets::loadTexture("assets/images/grid.png");
-    main_menu = asw::assets::loadTexture("assets/images/main_menu.png");
+    grid = asw::assets::load_texture("assets/images/grid.png");
+
+    main_menu = asw::assets::load_texture("assets/images/main_menu.png");
 
     // Set positions
     one_player.set_position(50, 70);
@@ -38,10 +39,10 @@ class Menu : public asw::scene::Scene<States> {
     // Checks for mouse press
     if (one_player.is_clicked()) {
       Game::players = 1;
-      sceneManager.setNextScene(States::Game);
+      manager.set_next_scene(States::Game);
     } else if (two_player.is_clicked()) {
       Game::players = 2;
-      sceneManager.setNextScene(States::Game);
+      manager.set_next_scene(States::Game);
     } else if (difficulty_b.is_clicked()) {
       Game::difficulty = (Game::difficulty + 1) % 3;
       set_difficulty_images();
@@ -49,16 +50,16 @@ class Menu : public asw::scene::Scene<States> {
       soundfx = !soundfx;
       set_sound_images();
     } else if (quit.is_clicked()) {
-      asw::core::exit = true;
+      asw::core::exit();
     }
   }
 
   void draw() override {
     // Draws grid
-    asw::draw::sprite(grid, asw::Vec2<float>(0, 0));
+    asw::draw::sprite(grid, asw::Vec2f(0, 0));
 
     // Draws menu
-    asw::draw::sprite(main_menu, asw::Vec2<float>(0, 0));
+    asw::draw::sprite(main_menu, asw::Vec2f(0, 0));
 
     // Draws Buttons
     one_player.draw();

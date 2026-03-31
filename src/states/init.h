@@ -8,5 +8,5 @@ class Init : public asw::scene::Scene<States> {
  public:
   using asw::scene::Scene<States>::Scene;
 
-  void update(float dt) override { sceneManager.setNextScene(States::Menu); }
+  void update(float dt) override { manager.set_next_scene(States::Menu); }
 };
