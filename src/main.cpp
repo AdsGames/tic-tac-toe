@@ -1,5 +1,6 @@
 #include <asw/asw.h>
 
+#include "./controls.h"
 #include "./states/game.h"
 #include "./states/init.h"
 #include "./states/menu.h"
@@ -10,6 +11,7 @@ int main() {
   asw::core::init(300, 300);
   asw::display::set_title("A.D.S. Games - Tic Tac Toe");
   asw::display::set_icon("assets/icon.ico");
+  controls::bind();
 
   // Scene manager
   auto app = asw::scene::SceneManager<States>();

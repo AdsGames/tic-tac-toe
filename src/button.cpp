@@ -1,5 +1,7 @@
 #include "button.h"
 
+#include "controls.h"
+
 Button::Button() {
   transform.set_position(0, 0);
   transform.set_size(10, 10);
@@ -19,8 +21,7 @@ bool Button::get_hover() const {
 }
 
 bool Button::is_clicked() const {
-  return get_hover() &&
-         asw::input::get_mouse_button_down(asw::input::MouseButton::Left);
+  return get_hover() && asw::input::get_action_down(controls::CLICK);
 }
 
 void Button::set_position(int x, int y) {

@@ -1,5 +1,7 @@
 #include "./game.h"
 
+#include "../controls.h"
+
 // Static init
 int Game::players = 1;
 int Game::difficulty = 1;
@@ -55,8 +57,7 @@ void Game::init() {
 void Game::gameOne() {
   // Places x or o respectively
   if (turn == 0) {
-    if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
-        gridarray[x][y] == 0) {
+    if (asw::input::get_action_down(controls::CLICK) && gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
       asw::sound::play(place);
       turn = 1;
@@ -171,7 +172,7 @@ void Game::gameOne() {
 // Performs unique two player actions
 void Game::gameTwo() {
   // Places x or o respectively
-  if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
+  if (asw::input::get_action_down(controls::CLICK) &&
       gridarray[x][y] == 0 && !menu.get_hover()) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
@@ -283,7 +284,7 @@ void Game::update(float dt) {
   }
 
   // Change selector sprite
-  if (asw::input::get_key_down(asw::input::Key::S)) {
+  if (asw::input::get_action_down(controls::CYCLE_SELECTOR)) {
     selector = (selector + 1) % 4;
   }
 
