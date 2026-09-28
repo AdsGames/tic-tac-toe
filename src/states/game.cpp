@@ -1,27 +1,13 @@
 #include "./game.h"
 
+#include "../controls.h"
+#include "../ui.h"
+
 // Static init
 int Game::players = 1;
 int Game::difficulty = 1;
 
 void Game::init() {
-  // Assigns variables
-  x = 0;
-  y = 0;
-
-  // Refreshes game board
-  gridarray = {{
-      {0, 0, 0},
-      {0, 0, 0},
-      {0, 0, 0},
-  }};
-
-  // Init variables
-  turn = 0;
-  selector = 0;
-  end_game_timer = 0;
-  has_won = false;
-
   // Assigns bitmaps
   grid = asw::assets::load_texture("assets/images/grid.png");
   img_x = asw::assets::load_texture("assets/images/x.png");
@@ -45,22 +31,44 @@ void Game::init() {
   cat = asw::assets::load_sample("assets/sfx/catsgame.wav");
   place = asw::assets::load_sample("assets/sfx/place.wav");
 
-  // Sets button positions
-  menu.set_images("assets/images/buttons/menu.png",
-                  "assets/images/buttons/menu_hover.png");
-  menu.set_position(0, 270);
+  // Creates buttons
+  gui.root.clear_children();
+  gui.ctx.theme.focus_ring.width = 0;
+  auto& menu = gui.root.add_child<asw::ui::Button>();
+  ui::set_button_images(menu, "menu");
+  menu.transform.position = asw::Vec2f(0, 270);
+  menu.on_click = [this]() { manager.set_next_scene(States::Menu); };
+
+  reset();
+}
+
+void Game::reset() {
+  // Assigns variables
+  x = 0;
+  y = 0;
+
+  // Refreshes game board
+  gridarray = {{
+      {0, 0, 0},
+      {0, 0, 0},
+      {0, 0, 0},
+  }};
+
+  // Init variables
+  turn = 0;
+  selector = 0;
+  end_game_timer = 0;
+  has_won = false;
 }
 
 // Performs unique one player actions
-void Game::gameOne() {
+void Game::gameOne(bool ui_used) {
   // Places x or o respectively
   if (turn == 0) {
-    if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
+    if (!ui_used && asw::input::get_action_down(controls::CLICK) &&
         gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
-      if (soundfx) {
-        asw::sound::play(place);
-      }
+      asw::sound::play(place);
       turn = 1;
     }
   }
@@ -162,9 +170,7 @@ void Game::gameOne() {
       }
     }
 
-    if (soundfx) {
-      asw::sound::play(place);
-    }
+    asw::sound::play(place);
 
     if (move_made) {
       turn = 0;
@@ -173,15 +179,13 @@ void Game::gameOne() {
 }
 
 // Performs unique two player actions
-void Game::gameTwo() {
+void Game::gameTwo(bool ui_used) {
   // Places x or o respectively
-  if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
-      gridarray[x][y] == 0 && !menu.get_hover()) {
+  if (!ui_used && asw::input::get_action_down(controls::CLICK) &&
+      gridarray[x][y] == 0) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
-    if (soundfx) {
-      asw::sound::play(place);
-    }
+    asw::sound::play(place);
   }
 }
 
@@ -241,6 +245,9 @@ bool Game::isCatsGame() {
 }
 
 void Game::update(float dt) {
+  // Updates buttons, a click the menu button used does not place a piece
+  const bool ui_used = gui.update();
+
   const auto& mouse = asw::input::get_mouse();
 
   // Chooses which tile is selected based on mouse position
@@ -254,9 +261,7 @@ void Game::update(float dt) {
   // Check and perform x winning action
   if (isWin(1)) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(win);
-      }
+      asw::sound::play(win);
       has_won = true;
     }
   }
@@ -264,9 +269,7 @@ void Game::update(float dt) {
   // Check and perform o winning action
   else if (isWin(2)) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(lose);
-      }
+      asw::sound::play(lose);
       has_won = true;
     }
   }
@@ -274,34 +277,27 @@ void Game::update(float dt) {
   // Check and perform cats game action
   else if (isCatsGame()) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(cat);
-      }
+      asw::sound::play(cat);
       has_won = true;
     }
   }
 
   if (end_game_timer > 2.0F) {
-    init();
+    reset();
   }
 
   // Runs game function
   if (!has_won) {
     if (Game::players == 1) {
-      gameOne();
+      gameOne(ui_used);
     } else {
-      gameTwo();
+      gameTwo(ui_used);
     }
   }
 
   // Change selector sprite
-  if (asw::input::get_key_down(asw::input::Key::S)) {
+  if (asw::input::get_action_down(controls::CYCLE_SELECTOR)) {
     selector = (selector + 1) % 4;
-  }
-
-  // Checks for mouse press
-  if (menu.is_clicked()) {
-    manager.set_next_scene(States::Menu);
   }
 }
 
@@ -357,7 +353,7 @@ void Game::draw() {
   }
 
   // Draws Menu Button
-  menu.draw();
+  gui.draw();
 
   if (Game::players == 1) {
     asw::draw::sprite(cursor.at(1), mouse.position);

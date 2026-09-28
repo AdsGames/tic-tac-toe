@@ -5,8 +5,6 @@
 #include <array>
 #include <utility>
 
-#include "../button.h"
-#include "../globals.h"
 #include "./state.h"
 
 using Coordinate = std::pair<int, int>;
@@ -25,11 +23,14 @@ class Game : public asw::scene::Scene<States> {
   static int difficulty;
 
  private:
-  // Performs unique one player actions
-  void gameOne();
+  // Clears the board for a new round
+  void reset();
 
-  // Performs unique two player actions
-  void gameTwo();
+  // Performs unique one player actions, ui_used skips input the UI took
+  void gameOne(bool ui_used);
+
+  // Performs unique two player actions, ui_used skips input the UI took
+  void gameTwo(bool ui_used);
 
   // Check win for player
   bool isWin(int player);
@@ -57,8 +58,8 @@ class Game : public asw::scene::Scene<States> {
   asw::Sample cat;
   asw::Sample place;
 
-  // Creates Butons
-  Button menu;
+  // Creates Buttons
+  asw::ui::Root gui;
 
   // Creates variables
   int x;
