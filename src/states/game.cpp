@@ -58,9 +58,7 @@ void Game::gameOne() {
     if (asw::input::get_mouse_button_down(asw::input::MouseButton::Left) &&
         gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
-      if (soundfx) {
-        asw::sound::play(place);
-      }
+      asw::sound::play(place);
       turn = 1;
     }
   }
@@ -162,9 +160,7 @@ void Game::gameOne() {
       }
     }
 
-    if (soundfx) {
-      asw::sound::play(place);
-    }
+    asw::sound::play(place);
 
     if (move_made) {
       turn = 0;
@@ -179,9 +175,7 @@ void Game::gameTwo() {
       gridarray[x][y] == 0 && !menu.get_hover()) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
-    if (soundfx) {
-      asw::sound::play(place);
-    }
+    asw::sound::play(place);
   }
 }
 
@@ -254,9 +248,7 @@ void Game::update(float dt) {
   // Check and perform x winning action
   if (isWin(1)) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(win);
-      }
+      asw::sound::play(win);
       has_won = true;
     }
   }
@@ -264,9 +256,7 @@ void Game::update(float dt) {
   // Check and perform o winning action
   else if (isWin(2)) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(lose);
-      }
+      asw::sound::play(lose);
       has_won = true;
     }
   }
@@ -274,9 +264,7 @@ void Game::update(float dt) {
   // Check and perform cats game action
   else if (isCatsGame()) {
     if (!has_won) {
-      if (soundfx) {
-        asw::sound::play(cat);
-      }
+      asw::sound::play(cat);
       has_won = true;
     }
   }

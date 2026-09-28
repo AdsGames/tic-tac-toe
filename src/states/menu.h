@@ -3,7 +3,6 @@
 #include <asw/asw.h>
 
 #include "../button.h"
-#include "../globals.h"
 #include "./game.h"
 #include "./state.h"
 
@@ -47,7 +46,7 @@ class Menu : public asw::scene::Scene<States> {
       Game::difficulty = (Game::difficulty + 1) % 3;
       set_difficulty_images();
     } else if (sound.is_clicked()) {
-      soundfx = !soundfx;
+      asw::sound::set_sfx_volume(sound_on() ? 0.0F : 1.0F);
       set_sound_images();
     } else if (quit.is_clicked()) {
       asw::core::exit();
@@ -83,8 +82,10 @@ class Menu : public asw::scene::Scene<States> {
     }
   }
 
+  static bool sound_on() { return asw::sound::get_sfx_volume() > 0.0F; }
+
   void set_sound_images() {
-    if (soundfx) {
+    if (sound_on()) {
       sound.set_images("assets/images/buttons/sound_on.png",
                        "assets/images/buttons/sound_on_hover.png");
     } else {

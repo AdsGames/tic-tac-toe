@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "../button.h"
-#include "../globals.h"
 #include "./state.h"
 
 using Coordinate = std::pair<int, int>;
