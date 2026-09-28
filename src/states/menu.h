@@ -1,6 +1,9 @@
 #pragma once
 
 #include <asw/asw.h>
+#include <array>
+#include <cstddef>
+#include <string>
 
 #include "../ui.h"
 #include "./game.h"
@@ -16,40 +19,53 @@ class Menu : public asw::scene::Scene<States> {
 
     main_menu = asw::assets::load_texture("assets/images/main_menu.png");
 
-    // Create buttons
-    ui::reset_root(gui);
+    // Create buttons. Arrows, Tab, Return, Space and a controller move
+    // through them; the hover image shows focus, so there is no focus ring
+    gui.root.clear_children();
+    gui.ctx.navigation = asw::ui::bind_default_navigation();
+    gui.ctx.theme.focus_ring.width = 0;
 
-    auto& one_player = ui::add_image_button(gui.root, "one_player", 50, 70);
+    auto& one_player = add_button("one_player", 50, 70);
     one_player.on_click = [this]() {
       Game::players = 1;
       manager.set_next_scene(States::Game);
     };
 
-    auto& two_player = ui::add_image_button(gui.root, "two_player", 50, 130);
+    auto& two_player = add_button("two_player", 50, 130);
     two_player.on_click = [this]() {
       Game::players = 2;
       manager.set_next_scene(States::Game);
     };
 
-    auto& quit = ui::add_image_button(gui.root, "quit", 50, 190);
+    auto& quit = add_button("quit", 50, 190);
     quit.on_click = []() { asw::core::exit(); };
 
     // Sound toggle, checked while sound is on
-    auto& sound = ui::add_image_button<asw::ui::Checkbox>(gui.root,
-                                                          "sound_off", 110, 250);
-    sound.texture_checked =
-        asw::assets::load_texture("assets/images/buttons/sound_on.png");
-    sound.texture_checked_hover =
-        asw::assets::load_texture("assets/images/buttons/sound_on_hover.png");
+    auto& sound = add_button<asw::ui::Checkbox>("sound_off", 110, 250);
+    sound.texture_checked = ui::button_texture("sound_on");
+    sound.texture_checked_hover = ui::button_texture("sound_on_hover");
     sound.checked = asw::sound::get_sfx_volume() > 0.0F;
     sound.on_change = [](bool on) {
       asw::sound::set_sfx_volume(on ? 1.0F : 0.0F);
     };
 
-    difficulty_b = &ui::add_image_button(gui.root, difficulty_name(), 150, 250);
-    difficulty_b->on_click = [this]() {
-      Game::difficulty = (Game::difficulty + 1) % 3;
-      ui::set_button_images(*difficulty_b, difficulty_name());
+    // Difficulty, cycles easy, medium, hard. Left and right move focus to the
+    // sound toggle beside it
+    static constexpr std::array<const char*, 3> difficulties = {
+        "easy", "medium", "hard"};
+    auto& difficulty = add_button<asw::ui::Choice>(difficulties[0], 150, 250);
+    difficulty.adjust_on_left_right = false;
+    for (const auto* name : difficulties) {
+      difficulty.images.push_back(ui::button_texture(name));
+    }
+    difficulty.select(static_cast<std::size_t>(Game::difficulty));
+    difficulty.texture_hover =
+        ui::button_texture(std::string(difficulties.at(difficulty.index)) +
+                           "_hover");
+    difficulty.on_change = [&difficulty](std::size_t index) {
+      Game::difficulty = static_cast<int>(index);
+      difficulty.texture_hover =
+          ui::button_texture(std::string(difficulties.at(index)) + "_hover");
     };
   }
 
@@ -67,18 +83,16 @@ class Menu : public asw::scene::Scene<States> {
   }
 
  private:
-  static const char* difficulty_name() {
-    if (Game::difficulty == 0) {
-      return "easy";
-    }
-    if (Game::difficulty == 1) {
-      return "medium";
-    }
-    return "hard";
+  // Add an image button at a position
+  template <typename T = asw::ui::Button>
+  T& add_button(const std::string& name, float x, float y) {
+    auto& button = gui.root.add_child<T>();
+    ui::set_button_images(button, name);
+    button.transform.position = asw::Vec2f(x, y);
+    return button;
   }
 
   asw::ui::Root gui;
-  asw::ui::Button* difficulty_b = nullptr;
 
   asw::Texture main_menu;
   asw::Texture grid;

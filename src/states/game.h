@@ -26,14 +26,11 @@ class Game : public asw::scene::Scene<States> {
   // Clears the board for a new round
   void reset();
 
-  // Whether the mouse is over the menu button
-  bool isOverMenu() const;
+  // Performs unique one player actions, ui_used skips input the UI took
+  void gameOne(bool ui_used);
 
-  // Performs unique one player actions
-  void gameOne();
-
-  // Performs unique two player actions
-  void gameTwo();
+  // Performs unique two player actions, ui_used skips input the UI took
+  void gameTwo(bool ui_used);
 
   // Check win for player
   bool isWin(int player);
@@ -63,7 +60,6 @@ class Game : public asw::scene::Scene<States> {
 
   // Creates Buttons
   asw::ui::Root gui;
-  asw::ui::Button* menu = nullptr;
 
   // Creates variables
   int x;

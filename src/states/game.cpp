@@ -32,9 +32,12 @@ void Game::init() {
   place = asw::assets::load_sample("assets/sfx/place.wav");
 
   // Creates buttons
-  ui::reset_root(gui);
-  menu = &ui::add_image_button(gui.root, "menu", 0, 270);
-  menu->on_click = [this]() { manager.set_next_scene(States::Menu); };
+  gui.root.clear_children();
+  gui.ctx.theme.focus_ring.width = 0;
+  auto& menu = gui.root.add_child<asw::ui::Button>();
+  ui::set_button_images(menu, "menu");
+  menu.transform.position = asw::Vec2f(0, 270);
+  menu.on_click = [this]() { manager.set_next_scene(States::Menu); };
 
   reset();
 }
@@ -58,16 +61,12 @@ void Game::reset() {
   has_won = false;
 }
 
-bool Game::isOverMenu() const {
-  return menu->transform.contains(asw::input::get_mouse().position);
-}
-
 // Performs unique one player actions
-void Game::gameOne() {
+void Game::gameOne(bool ui_used) {
   // Places x or o respectively
   if (turn == 0) {
-    if (asw::input::get_action_down(controls::CLICK) && gridarray[x][y] == 0 &&
-        !isOverMenu()) {
+    if (!ui_used && asw::input::get_action_down(controls::CLICK) &&
+        gridarray[x][y] == 0) {
       gridarray[x][y] = 1;
       asw::sound::play(place);
       turn = 1;
@@ -180,10 +179,10 @@ void Game::gameOne() {
 }
 
 // Performs unique two player actions
-void Game::gameTwo() {
+void Game::gameTwo(bool ui_used) {
   // Places x or o respectively
-  if (asw::input::get_action_down(controls::CLICK) &&
-      gridarray[x][y] == 0 && !isOverMenu()) {
+  if (!ui_used && asw::input::get_action_down(controls::CLICK) &&
+      gridarray[x][y] == 0) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
     asw::sound::play(place);
@@ -246,6 +245,9 @@ bool Game::isCatsGame() {
 }
 
 void Game::update(float dt) {
+  // Updates buttons, a click the menu button used does not place a piece
+  const bool ui_used = gui.update();
+
   const auto& mouse = asw::input::get_mouse();
 
   // Chooses which tile is selected based on mouse position
@@ -287,9 +289,9 @@ void Game::update(float dt) {
   // Runs game function
   if (!has_won) {
     if (Game::players == 1) {
-      gameOne();
+      gameOne(ui_used);
     } else {
-      gameTwo();
+      gameTwo(ui_used);
     }
   }
 
@@ -297,9 +299,6 @@ void Game::update(float dt) {
   if (asw::input::get_action_down(controls::CYCLE_SELECTOR)) {
     selector = (selector + 1) % 4;
   }
-
-  // Updates buttons
-  gui.update();
 }
 
 void Game::draw() {
