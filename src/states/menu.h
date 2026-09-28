@@ -2,7 +2,7 @@
 
 #include <asw/asw.h>
 
-#include "../button.h"
+#include "../ui.h"
 #include "./game.h"
 #include "./state.h"
 
@@ -11,47 +11,49 @@ class Menu : public asw::scene::Scene<States> {
   using asw::scene::Scene<States>::Scene;
 
   void init() override {
-    // Sets button images
-    one_player.set_images("assets/images/buttons/one_player.png",
-                          "assets/images/buttons/one_player_hover.png");
-    two_player.set_images("assets/images/buttons/two_player.png",
-                          "assets/images/buttons/two_player_hover.png");
-    quit.set_images("assets/images/buttons/quit.png",
-                    "assets/images/buttons/quit_hover.png");
-    set_sound_images();
-    set_difficulty_images();
-
     // Load sprites
     grid = asw::assets::load_texture("assets/images/grid.png");
 
     main_menu = asw::assets::load_texture("assets/images/main_menu.png");
 
-    // Set positions
-    one_player.set_position(50, 70);
-    two_player.set_position(50, 130);
-    quit.set_position(50, 190);
-    sound.set_position(110, 250);
-    difficulty_b.set_position(150, 250);
-  }
+    // Create buttons
+    ui::reset_root(gui);
 
-  void update(float /*dt*/) override {
-    // Checks for mouse press
-    if (one_player.is_clicked()) {
+    auto& one_player = ui::add_image_button(gui.root, "one_player", 50, 70);
+    one_player.on_click = [this]() {
       Game::players = 1;
       manager.set_next_scene(States::Game);
-    } else if (two_player.is_clicked()) {
+    };
+
+    auto& two_player = ui::add_image_button(gui.root, "two_player", 50, 130);
+    two_player.on_click = [this]() {
       Game::players = 2;
       manager.set_next_scene(States::Game);
-    } else if (difficulty_b.is_clicked()) {
+    };
+
+    auto& quit = ui::add_image_button(gui.root, "quit", 50, 190);
+    quit.on_click = []() { asw::core::exit(); };
+
+    // Sound toggle, checked while sound is on
+    auto& sound = ui::add_image_button<asw::ui::Checkbox>(gui.root,
+                                                          "sound_off", 110, 250);
+    sound.texture_checked =
+        asw::assets::load_texture("assets/images/buttons/sound_on.png");
+    sound.texture_checked_hover =
+        asw::assets::load_texture("assets/images/buttons/sound_on_hover.png");
+    sound.checked = asw::sound::get_sfx_volume() > 0.0F;
+    sound.on_change = [](bool on) {
+      asw::sound::set_sfx_volume(on ? 1.0F : 0.0F);
+    };
+
+    difficulty_b = &ui::add_image_button(gui.root, difficulty_name(), 150, 250);
+    difficulty_b->on_click = [this]() {
       Game::difficulty = (Game::difficulty + 1) % 3;
-      set_difficulty_images();
-    } else if (sound.is_clicked()) {
-      asw::sound::set_sfx_volume(sound_on() ? 0.0F : 1.0F);
-      set_sound_images();
-    } else if (quit.is_clicked()) {
-      asw::core::exit();
-    }
+      ui::set_button_images(*difficulty_b, difficulty_name());
+    };
   }
+
+  void update(float /*dt*/) override { gui.update(); }
 
   void draw() override {
     // Draws grid
@@ -61,44 +63,22 @@ class Menu : public asw::scene::Scene<States> {
     asw::draw::sprite(main_menu, asw::Vec2f(0, 0));
 
     // Draws Buttons
-    one_player.draw();
-    two_player.draw();
-    quit.draw();
-    sound.draw();
-    difficulty_b.draw();
+    gui.draw();
   }
 
  private:
-  void set_difficulty_images() {
+  static const char* difficulty_name() {
     if (Game::difficulty == 0) {
-      difficulty_b.set_images("assets/images/buttons/easy.png",
-                              "assets/images/buttons/easy_hover.png");
-    } else if (Game::difficulty == 1) {
-      difficulty_b.set_images("assets/images/buttons/medium.png",
-                              "assets/images/buttons/medium_hover.png");
-    } else if (Game::difficulty == 2) {
-      difficulty_b.set_images("assets/images/buttons/hard.png",
-                              "assets/images/buttons/hard_hover.png");
+      return "easy";
     }
+    if (Game::difficulty == 1) {
+      return "medium";
+    }
+    return "hard";
   }
 
-  static bool sound_on() { return asw::sound::get_sfx_volume() > 0.0F; }
-
-  void set_sound_images() {
-    if (sound_on()) {
-      sound.set_images("assets/images/buttons/sound_on.png",
-                       "assets/images/buttons/sound_on_hover.png");
-    } else {
-      sound.set_images("assets/images/buttons/sound_off.png",
-                       "assets/images/buttons/sound_off_hover.png");
-    }
-  }
-
-  Button one_player;
-  Button two_player;
-  Button quit;
-  Button sound;
-  Button difficulty_b;
+  asw::ui::Root gui;
+  asw::ui::Button* difficulty_b = nullptr;
 
   asw::Texture main_menu;
   asw::Texture grid;

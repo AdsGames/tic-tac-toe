@@ -3,7 +3,7 @@
 // Input actions for the game
 namespace controls {
 
-// Click a button or place a piece
+// Place a piece
 inline constexpr const char* CLICK = "click";
 
 // Change the selection tile sprite

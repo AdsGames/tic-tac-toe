@@ -1,29 +1,13 @@
 #include "./game.h"
 
 #include "../controls.h"
+#include "../ui.h"
 
 // Static init
 int Game::players = 1;
 int Game::difficulty = 1;
 
 void Game::init() {
-  // Assigns variables
-  x = 0;
-  y = 0;
-
-  // Refreshes game board
-  gridarray = {{
-      {0, 0, 0},
-      {0, 0, 0},
-      {0, 0, 0},
-  }};
-
-  // Init variables
-  turn = 0;
-  selector = 0;
-  end_game_timer = 0;
-  has_won = false;
-
   // Assigns bitmaps
   grid = asw::assets::load_texture("assets/images/grid.png");
   img_x = asw::assets::load_texture("assets/images/x.png");
@@ -47,17 +31,43 @@ void Game::init() {
   cat = asw::assets::load_sample("assets/sfx/catsgame.wav");
   place = asw::assets::load_sample("assets/sfx/place.wav");
 
-  // Sets button positions
-  menu.set_images("assets/images/buttons/menu.png",
-                  "assets/images/buttons/menu_hover.png");
-  menu.set_position(0, 270);
+  // Creates buttons
+  ui::reset_root(gui);
+  menu = &ui::add_image_button(gui.root, "menu", 0, 270);
+  menu->on_click = [this]() { manager.set_next_scene(States::Menu); };
+
+  reset();
+}
+
+void Game::reset() {
+  // Assigns variables
+  x = 0;
+  y = 0;
+
+  // Refreshes game board
+  gridarray = {{
+      {0, 0, 0},
+      {0, 0, 0},
+      {0, 0, 0},
+  }};
+
+  // Init variables
+  turn = 0;
+  selector = 0;
+  end_game_timer = 0;
+  has_won = false;
+}
+
+bool Game::isOverMenu() const {
+  return menu->transform.contains(asw::input::get_mouse().position);
 }
 
 // Performs unique one player actions
 void Game::gameOne() {
   // Places x or o respectively
   if (turn == 0) {
-    if (asw::input::get_action_down(controls::CLICK) && gridarray[x][y] == 0) {
+    if (asw::input::get_action_down(controls::CLICK) && gridarray[x][y] == 0 &&
+        !isOverMenu()) {
       gridarray[x][y] = 1;
       asw::sound::play(place);
       turn = 1;
@@ -173,7 +183,7 @@ void Game::gameOne() {
 void Game::gameTwo() {
   // Places x or o respectively
   if (asw::input::get_action_down(controls::CLICK) &&
-      gridarray[x][y] == 0 && !menu.get_hover()) {
+      gridarray[x][y] == 0 && !isOverMenu()) {
     gridarray[x][y] = turn + 1;
     turn = (turn + 1) % 2;
     asw::sound::play(place);
@@ -271,7 +281,7 @@ void Game::update(float dt) {
   }
 
   if (end_game_timer > 2.0F) {
-    init();
+    reset();
   }
 
   // Runs game function
@@ -288,10 +298,8 @@ void Game::update(float dt) {
     selector = (selector + 1) % 4;
   }
 
-  // Checks for mouse press
-  if (menu.is_clicked()) {
-    manager.set_next_scene(States::Menu);
-  }
+  // Updates buttons
+  gui.update();
 }
 
 void Game::draw() {
@@ -346,7 +354,7 @@ void Game::draw() {
   }
 
   // Draws Menu Button
-  menu.draw();
+  gui.draw();
 
   if (Game::players == 1) {
     asw::draw::sprite(cursor.at(1), mouse.position);

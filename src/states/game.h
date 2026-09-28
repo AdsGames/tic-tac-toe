@@ -5,7 +5,6 @@
 #include <array>
 #include <utility>
 
-#include "../button.h"
 #include "./state.h"
 
 using Coordinate = std::pair<int, int>;
@@ -24,6 +23,12 @@ class Game : public asw::scene::Scene<States> {
   static int difficulty;
 
  private:
+  // Clears the board for a new round
+  void reset();
+
+  // Whether the mouse is over the menu button
+  bool isOverMenu() const;
+
   // Performs unique one player actions
   void gameOne();
 
@@ -56,8 +61,9 @@ class Game : public asw::scene::Scene<States> {
   asw::Sample cat;
   asw::Sample place;
 
-  // Creates Butons
-  Button menu;
+  // Creates Buttons
+  asw::ui::Root gui;
+  asw::ui::Button* menu = nullptr;
 
   // Creates variables
   int x;
