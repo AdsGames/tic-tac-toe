@@ -34,7 +34,7 @@ class Menu : public asw::scene::Scene<States> {
     difficulty_b.set_position(150, 250);
   }
 
-  void update(float dt) override {
+  void update(float /*dt*/) override {
     // Checks for mouse press
     if (one_player.is_clicked()) {
       Game::players = 1;
